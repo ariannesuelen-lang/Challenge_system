@@ -1,0 +1,74 @@
+SELECT * FROM usuarios
+CREATE EXTENSION IF NOT EXISTS "pgcrypto";
+
+-- =========================
+-- TABELA USUARIOS
+-- =========================
+
+CREATE TABLE usuarios (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    nome TEXT NOT NULL,
+    email TEXT UNIQUE NOT NULL,
+    senha TEXT NOT NULL,
+    tipo_usuario TEXT NOT NULL,
+    criado_em TIMESTAMP DEFAULT NOW()
+);
+
+-- =========================
+-- TABELA CURSOS
+-- =========================
+
+CREATE TABLE cursos (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    nome TEXT NOT NULL
+);
+
+-- =========================
+-- TABELA DISCIPLINAS
+-- =========================
+
+CREATE TABLE disciplinas (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    nome TEXT NOT NULL,
+    curso_id UUID REFERENCES cursos(id)
+);
+
+-- =========================
+-- TABELA DESAFIOS
+-- =========================
+
+CREATE TABLE desafios (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    titulo TEXT NOT NULL,
+    descricao TEXT,
+    criador_id UUID REFERENCES usuarios(id),
+    disciplina_id UUID REFERENCES disciplinas(id),
+    data_criacao TIMESTAMP DEFAULT NOW(),
+    data_limite TIMESTAMP
+);
+
+-- =========================
+-- TABELA RESPOSTAS
+-- =========================
+
+CREATE TABLE respostas (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    desafio_id UUID REFERENCES desafios(id) ON DELETE CASCADE,
+    usuario_id UUID REFERENCES usuarios(id),
+    conteudo TEXT NOT NULL,
+    data_resposta TIMESTAMP DEFAULT NOW()
+);
+
+-- =========================
+-- TABELA VOTOS
+-- =========================
+
+CREATE TABLE votos (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    resposta_id UUID REFERENCES respostas(id) ON DELETE CASCADE,
+    usuario_id UUID REFERENCES usuarios(id),
+    criado_em TIMESTAMP DEFAULT NOW(),
+
+    -- evita voto duplicado
+    UNIQUE(resposta_id, usuario_id)
+);
