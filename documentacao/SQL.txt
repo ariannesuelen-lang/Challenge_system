@@ -1,0 +1,57 @@
+CREATE TABLE cursos (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    nome VARCHAR(255) NOT NULL
+);
+
+
+CREATE TABLE disciplinas (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    nome VARCHAR(255) NOT NULL,
+    curso_id INT,
+    FOREIGN KEY (curso_id) REFERENCES cursos(id)
+);
+
+
+CREATE TABLE usuarios (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    nome VARCHAR(255) NOT NULL,
+    email VARCHAR(255) NOT NULL UNIQUE,
+    senha VARCHAR(255) NOT NULL,
+    tipo_usuario VARCHAR(50),
+    criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+
+CREATE TABLE desafios (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    titulo VARCHAR(255) NOT NULL,
+    descricao TEXT,
+    criador_id INT,
+    disciplina_id INT,
+    data_criacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    data_limite TIMESTAMP,
+    FOREIGN KEY (criador_id) REFERENCES usuarios(id),
+    FOREIGN KEY (disciplina_id) REFERENCES disciplinas(id)
+);
+
+
+CREATE TABLE respostas (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    desafio_id INT,
+    usuario_id INT,
+    conteudo TEXT,
+    data_resposta TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (desafio_id) REFERENCES desafios(id),
+    FOREIGN KEY (usuario_id) REFERENCES usuarios(id)
+);
+
+
+CREATE TABLE votos (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    resposta_id INT,
+    usuario_id INT,
+    criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (resposta_id) REFERENCES respostas(id),
+    FOREIGN KEY (usuario_id) REFERENCES usuarios(id),
+    UNIQUE (resposta_id, usuario_id)
+);
