@@ -1,57 +1,45 @@
 CREATE TABLE cursos (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    nome VARCHAR(255) NOT NULL
+    id SERIAL PRIMARY KEY,
+    nome TEXT NOT NULL
 );
-
 
 CREATE TABLE disciplinas (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    nome VARCHAR(255) NOT NULL,
-    curso_id INT,
-    FOREIGN KEY (curso_id) REFERENCES cursos(id)
+    id SERIAL PRIMARY KEY,
+    nome TEXT NOT NULL,
+    curso_id INT REFERENCES cursos(id)
 );
-
 
 CREATE TABLE usuarios (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    nome VARCHAR(255) NOT NULL,
-    email VARCHAR(255) NOT NULL UNIQUE,
-    senha VARCHAR(255) NOT NULL,
-    tipo_usuario VARCHAR(50),
-    criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    id SERIAL PRIMARY KEY,
+    nome TEXT NOT NULL,
+    email TEXT NOT NULL UNIQUE,
+    senha TEXT NOT NULL,
+    tipo_usuario TEXT,
+    criado_em TIMESTAMPTZ DEFAULT NOW()
 );
-
 
 CREATE TABLE desafios (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    titulo VARCHAR(255) NOT NULL,
+    id SERIAL PRIMARY KEY,
+    titulo TEXT NOT NULL,
     descricao TEXT,
-    criador_id INT,
-    disciplina_id INT,
-    data_criacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    data_limite TIMESTAMP,
-    FOREIGN KEY (criador_id) REFERENCES usuarios(id),
-    FOREIGN KEY (disciplina_id) REFERENCES disciplinas(id)
+    criador_id INT REFERENCES usuarios(id),
+    disciplina_id INT REFERENCES disciplinas(id),
+    data_criacao TIMESTAMPTZ DEFAULT NOW(),
+    data_limite TIMESTAMPTZ
 );
-
 
 CREATE TABLE respostas (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    desafio_id INT,
-    usuario_id INT,
+    id SERIAL PRIMARY KEY,
+    desafio_id INT REFERENCES desafios(id),
+    usuario_id INT REFERENCES usuarios(id),
     conteudo TEXT,
-    data_resposta TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (desafio_id) REFERENCES desafios(id),
-    FOREIGN KEY (usuario_id) REFERENCES usuarios(id)
+    data_resposta TIMESTAMPTZ DEFAULT NOW()
 );
 
-
 CREATE TABLE votos (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    resposta_id INT,
-    usuario_id INT,
-    criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (resposta_id) REFERENCES respostas(id),
-    FOREIGN KEY (usuario_id) REFERENCES usuarios(id),
+    id SERIAL PRIMARY KEY,
+    resposta_id INT REFERENCES respostas(id),
+    usuario_id INT REFERENCES usuarios(id),
+    criado_em TIMESTAMPTZ DEFAULT NOW(),
     UNIQUE (resposta_id, usuario_id)
 );
