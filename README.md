@@ -1,7 +1,6 @@
 
 ## README — branch do front-end
 
-```md
 # Desafio de Votação - Front-end
 
 Este projeto é a interface utilizada pelos alunos para realizar a votação de um desafio da turma.
