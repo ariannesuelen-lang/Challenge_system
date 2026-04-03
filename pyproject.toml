@@ -1,0 +1,14 @@
+[project]
+name = "sistema-votacao"
+version = "0.1.0"
+description = "Backend do sistema de votação"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    
+]
+ 
+[tool.taskipy.tasks]
+
+# ---------- Execução / utilidades ----------
+dev      = "uv run main.py"
