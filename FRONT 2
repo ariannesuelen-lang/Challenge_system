@@ -1,19 +1,9 @@
 import streamlit as st
-import sqlite3
 import hashlib
 
-# MINI BANCO DE DADOS
-conexao = sqlite3.connect('usuarios.db', check_same_thread=False)
-cursor = conexao.cursor()
-
-cursor.execute('''
-CREATE TABLE IF NOT EXISTS usuarios (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    usuario TEXT UNIQUE,
-    senha TEXT
-)
-''')
-conexao.commit()
+# "BANCO" EM MEMÓRIA
+if "usuarios" not in st.session_state:
+    st.session_state.usuarios = []
 
 # FUNÇÕES DO CODIGO
 def criptografar_senha(senha):
@@ -21,40 +11,40 @@ def criptografar_senha(senha):
 
 def criar_usuario(usuario, senha):
     try:
-        cursor.execute(
-            "INSERT INTO usuarios (usuario, senha) VALUES (?, ?)",
-            (usuario, criptografar_senha(senha))
-        )
-        conexao.commit()
+        for u in st.session_state.usuarios:
+            if u["usuario"] == usuario:
+                return False
+
+        st.session_state.usuarios.append({
+            "id": len(st.session_state.usuarios) + 1,
+            "usuario": usuario,
+            "senha": criptografar_senha(senha)
+        })
         return True
     except:
         return False
 
 def verificar_login(usuario, senha):
-    cursor.execute(
-        "SELECT * FROM usuarios WHERE usuario=? AND senha=?",
-        (usuario, criptografar_senha(senha))
-    )
-    return cursor.fetchone()
+    for u in st.session_state.usuarios:
+        if u["usuario"] == usuario and u["senha"] == criptografar_senha(senha):
+            return u
+    return None
 
 def listar_usuarios():
-    cursor.execute("SELECT id, usuario FROM usuarios")
-    return cursor.fetchall()
+    return st.session_state.usuarios
 
 def atualizar_senha(id_usuario, nova_senha):
-    cursor.execute(
-        "UPDATE usuarios SET senha=? WHERE id=?",
-        (criptografar_senha(nova_senha), id_usuario)
-    )
-    conexao.commit()
+    for u in st.session_state.usuarios:
+        if u["id"] == id_usuario:
+            u["senha"] = criptografar_senha(nova_senha)
 
 def remover_usuario(id_usuario):
-    cursor.execute("DELETE FROM usuarios WHERE id=?", (id_usuario,))
-    conexao.commit()
+    st.session_state.usuarios = [
+        u for u in st.session_state.usuarios if u["id"] != id_usuario
+    ]
 
-# INTERFACE  PRICIPAL
-
-st.title(" Sistema de Login")
+# INTERFACE PRINCIPAL
+st.title("Sistema de Login")
 
 menu = ["Login", "Cadastrar", "Usuários"]
 opcao = st.sidebar.selectbox("Menu", menu)
@@ -85,7 +75,8 @@ elif opcao == "Cadastrar":
             st.success("Conta criada com sucesso!")
         else:
             st.error("Usuário já existe")
-# TELA DE USUARIO
+
+# TELA DE USUÁRIO
 elif opcao == "Usuários":
     st.subheader("Lista de usuários")
 
@@ -95,19 +86,19 @@ elif opcao == "Usuários":
         col1, col2, col3 = st.columns(3)
 
         with col1:
-            st.write(usuario_item[1])
+            st.write(usuario_item["usuario"])
 
         with col2:
             nova_senha = st.text_input(
                 "Nova senha",
                 type="password",
-                key=f"senha{usuario_item[0]}"
+                key=f"senha{usuario_item['id']}"
             )
-            if st.button("Atualizar", key=f"atualizar{usuario_item[0]}"):
-                atualizar_senha(usuario_item[0], nova_senha)
+            if st.button("Atualizar", key=f"atualizar{usuario_item['id']}"):
+                atualizar_senha(usuario_item["id"], nova_senha)
                 st.success("Senha atualizada")
 
         with col3:
-            if st.button("Remover", key=f"remover{usuario_item[0]}"):
-                remover_usuario(usuario_item[0])
+            if st.button("Remover", key=f"remover{usuario_item['id']}"):
+                remover_usuario(usuario_item["id"])
                 st.warning("Usuário removido")
