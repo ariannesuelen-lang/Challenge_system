@@ -1,5 +1,6 @@
 import streamlit as st
 import hashlib
+import re
 
 # "BANCO" EM MEMÓRIA
 if "usuarios" not in st.session_state:
@@ -9,20 +10,33 @@ if "usuarios" not in st.session_state:
 def criptografar_senha(senha):
     return hashlib.sha256(senha.encode()).hexdigest()
 
+def senha_valida(senha):
+    if len(senha) < 8:
+        return "A senha deve ter no mínimo 8 caracteres"
+    if not re.search(r"[A-Z]", senha):
+        return "A senha deve conter pelo menos 1 letra maiúscula"
+    if not re.search(r"\d", senha):
+        return "A senha deve conter pelo menos 1 número"
+    return "ok"
+
 def criar_usuario(usuario, senha):
     try:
+        validacao = senha_valida(senha)
+        if validacao != "ok":
+            return validacao
+
         for u in st.session_state.usuarios:
             if u["usuario"] == usuario:
-                return False
+                return "Usuário já existe"
 
         st.session_state.usuarios.append({
             "id": len(st.session_state.usuarios) + 1,
             "usuario": usuario,
             "senha": criptografar_senha(senha)
         })
-        return True
+        return "ok"
     except:
-        return False
+        return "Erro ao criar usuário"
 
 def verificar_login(usuario, senha):
     for u in st.session_state.usuarios:
@@ -34,9 +48,16 @@ def listar_usuarios():
     return st.session_state.usuarios
 
 def atualizar_senha(id_usuario, nova_senha):
+    validacao = senha_valida(nova_senha)
+    if validacao != "ok":
+        return validacao
+
     for u in st.session_state.usuarios:
         if u["id"] == id_usuario:
             u["senha"] = criptografar_senha(nova_senha)
+            return "ok"
+
+    return "Erro ao atualizar"
 
 def remover_usuario(id_usuario):
     st.session_state.usuarios = [
@@ -71,10 +92,12 @@ elif opcao == "Cadastrar":
     nova_senha = st.text_input("Senha", type="password")
 
     if st.button("Cadastrar"):
-        if criar_usuario(novo_usuario, nova_senha):
+        resultado = criar_usuario(novo_usuario, nova_senha)
+
+        if resultado == "ok":
             st.success("Conta criada com sucesso!")
         else:
-            st.error("Usuário já existe")
+            st.error(resultado)
 
 # TELA DE USUÁRIO
 elif opcao == "Usuários":
@@ -95,8 +118,12 @@ elif opcao == "Usuários":
                 key=f"senha{usuario_item['id']}"
             )
             if st.button("Atualizar", key=f"atualizar{usuario_item['id']}"):
-                atualizar_senha(usuario_item["id"], nova_senha)
-                st.success("Senha atualizada")
+                resultado = atualizar_senha(usuario_item["id"], nova_senha)
+
+                if resultado == "ok":
+                    st.success("Senha atualizada")
+                else:
+                    st.error(resultado)
 
         with col3:
             if st.button("Remover", key=f"remover{usuario_item['id']}"):
