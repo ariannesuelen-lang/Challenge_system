@@ -1,3 +1,5 @@
 # Challenge_system
 MAIN
 Sistema de Desafios - Universidades
+
+ESSA BRANCH TEM O INTUITO DE DIVIDIR E ORGANIZAR O QUE CADA PARTE DO GRUPO ESTA REALIZANDO
