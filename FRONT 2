@@ -1,1 +1,113 @@
+import streamlit as st
+import sqlite3
+import hashlib
 
+# MINI BANCO DE DADOS
+conexao = sqlite3.connect('usuarios.db', check_same_thread=False)
+cursor = conexao.cursor()
+
+cursor.execute('''
+CREATE TABLE IF NOT EXISTS usuarios (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    usuario TEXT UNIQUE,
+    senha TEXT
+)
+''')
+conexao.commit()
+
+# FUNÇÕES DO CODIGO
+def criptografar_senha(senha):
+    return hashlib.sha256(senha.encode()).hexdigest()
+
+def criar_usuario(usuario, senha):
+    try:
+        cursor.execute(
+            "INSERT INTO usuarios (usuario, senha) VALUES (?, ?)",
+            (usuario, criptografar_senha(senha))
+        )
+        conexao.commit()
+        return True
+    except:
+        return False
+
+def verificar_login(usuario, senha):
+    cursor.execute(
+        "SELECT * FROM usuarios WHERE usuario=? AND senha=?",
+        (usuario, criptografar_senha(senha))
+    )
+    return cursor.fetchone()
+
+def listar_usuarios():
+    cursor.execute("SELECT id, usuario FROM usuarios")
+    return cursor.fetchall()
+
+def atualizar_senha(id_usuario, nova_senha):
+    cursor.execute(
+        "UPDATE usuarios SET senha=? WHERE id=?",
+        (criptografar_senha(nova_senha), id_usuario)
+    )
+    conexao.commit()
+
+def remover_usuario(id_usuario):
+    cursor.execute("DELETE FROM usuarios WHERE id=?", (id_usuario,))
+    conexao.commit()
+
+# INTERFACE  PRICIPAL
+
+st.title(" Sistema de Login")
+
+menu = ["Login", "Cadastrar", "Usuários"]
+opcao = st.sidebar.selectbox("Menu", menu)
+
+# TELA DE LOGIN
+if opcao == "Login":
+    st.subheader("Entrar")
+
+    usuario = st.text_input("Usuário")
+    senha = st.text_input("Senha", type="password")
+
+    if st.button("Entrar"):
+        usuario_encontrado = verificar_login(usuario, senha)
+        if usuario_encontrado:
+            st.success(f"Bem-vindo, {usuario}!")
+        else:
+            st.error("Usuário ou senha inválidos")
+
+# TELA DE CADASTRO
+elif opcao == "Cadastrar":
+    st.subheader("Criar conta")
+
+    novo_usuario = st.text_input("Usuário")
+    nova_senha = st.text_input("Senha", type="password")
+
+    if st.button("Cadastrar"):
+        if criar_usuario(novo_usuario, nova_senha):
+            st.success("Conta criada com sucesso!")
+        else:
+            st.error("Usuário já existe")
+# TELA DE USUARIO
+elif opcao == "Usuários":
+    st.subheader("Lista de usuários")
+
+    lista_usuarios = listar_usuarios()
+
+    for usuario_item in lista_usuarios:
+        col1, col2, col3 = st.columns(3)
+
+        with col1:
+            st.write(usuario_item[1])
+
+        with col2:
+            nova_senha = st.text_input(
+                "Nova senha",
+                type="password",
+                key=f"senha{usuario_item[0]}"
+            )
+            if st.button("Atualizar", key=f"atualizar{usuario_item[0]}"):
+                atualizar_senha(usuario_item[0], nova_senha)
+                st.success("Senha atualizada")
+
+        with col3:
+            if st.button("Remover", key=f"remover{usuario_item[0]}"):
+                remover_usuario(usuario_item[0])
+                st.warning("Usuário removido")
