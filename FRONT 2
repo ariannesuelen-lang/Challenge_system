@@ -1,12 +1,35 @@
 import streamlit as st
 import hashlib
 import re
+from datetime import datetime
 
-# "BANCO" EM MEMÓRIA
+# ─────────────────────────────────────────────
+# BANCO EM MEMÓRIA (simulando as tabelas do SQL)
+# ─────────────────────────────────────────────
 if "usuarios" not in st.session_state:
     st.session_state.usuarios = []
 
-# FUNÇÕES DO CODIGO
+if "cursos" not in st.session_state:
+    st.session_state.cursos = []
+
+if "disciplinas" not in st.session_state:
+    st.session_state.disciplinas = []
+
+if "desafios" not in st.session_state:
+    st.session_state.desafios = []
+
+if "respostas" not in st.session_state:
+    st.session_state.respostas = []
+
+if "votos" not in st.session_state:
+    st.session_state.votos = []
+
+if "usuario_logado" not in st.session_state:
+    st.session_state.usuario_logado = None
+
+# ─────────────────────────────────────────────
+# FUNÇÕES AUXILIARES
+# ─────────────────────────────────────────────
 def criptografar_senha(senha):
     return hashlib.sha256(senha.encode()).hexdigest()
 
@@ -19,113 +42,362 @@ def senha_valida(senha):
         return "A senha deve conter pelo menos 1 número"
     return "ok"
 
-def criar_usuario(usuario, senha):
-    try:
-        validacao = senha_valida(senha)
-        if validacao != "ok":
-            return validacao
+def proximo_id(lista):
+    if not lista:
+        return 1
+    return max(item["id"] for item in lista) + 1
 
-        for u in st.session_state.usuarios:
-            if u["usuario"] == usuario:
-                return "Usuário já existe"
-
-        st.session_state.usuarios.append({
-            "id": len(st.session_state.usuarios) + 1,
-            "usuario": usuario,
-            "senha": criptografar_senha(senha)
-        })
-        return "ok"
-    except:
-        return "Erro ao criar usuário"
-
-def verificar_login(usuario, senha):
+# ─────────────────────────────────────────────
+# USUÁRIOS
+# ─────────────────────────────────────────────
+def criar_usuario(nome, email, senha, tipo_usuario):
+    validacao = senha_valida(senha)
+    if validacao != "ok":
+        return validacao
+    if not nome.strip():
+        return "O nome não pode ser vazio"
+    if not re.match(r"[^@]+@[^@]+\.[^@]+", email):
+        return "E-mail inválido"
     for u in st.session_state.usuarios:
-        if u["usuario"] == usuario and u["senha"] == criptografar_senha(senha):
+        if u["email"] == email:
+            return "E-mail já cadastrado"
+    st.session_state.usuarios.append({
+        "id": proximo_id(st.session_state.usuarios),
+        "nome": nome,
+        "email": email,
+        "senha": criptografar_senha(senha),
+        "tipo_usuario": tipo_usuario,
+        "criado_em": datetime.now()
+    })
+    return "ok"
+
+def verificar_login(email, senha):
+    for u in st.session_state.usuarios:
+        if u["email"] == email and u["senha"] == criptografar_senha(senha):
             return u
     return None
 
-def listar_usuarios():
-    return st.session_state.usuarios
+# ─────────────────────────────────────────────
+# CURSOS
+# ─────────────────────────────────────────────
+def criar_curso(nome):
+    if not nome.strip():
+        return "O nome do curso não pode ser vazio"
+    st.session_state.cursos.append({
+        "id": proximo_id(st.session_state.cursos),
+        "nome": nome
+    })
+    return "ok"
 
-def atualizar_senha(id_usuario, nova_senha):
-    validacao = senha_valida(nova_senha)
-    if validacao != "ok":
-        return validacao
+def listar_cursos():
+    return st.session_state.cursos
 
+# ─────────────────────────────────────────────
+# DISCIPLINAS
+# ─────────────────────────────────────────────
+def criar_disciplina(nome, curso_id):
+    if not nome.strip():
+        return "O nome da disciplina não pode ser vazio"
+    st.session_state.disciplinas.append({
+        "id": proximo_id(st.session_state.disciplinas),
+        "nome": nome,
+        "curso_id": curso_id
+    })
+    return "ok"
+
+def disciplinas_do_curso(curso_id):
+    return [d for d in st.session_state.disciplinas if d["curso_id"] == curso_id]
+
+def listar_disciplinas():
+    return st.session_state.disciplinas
+
+# ─────────────────────────────────────────────
+# DESAFIOS
+# ─────────────────────────────────────────────
+def criar_desafio(titulo, descricao, criador_id, disciplina_id, data_limite):
+    if not titulo.strip():
+        return "O título não pode ser vazio"
+    st.session_state.desafios.append({
+        "id": proximo_id(st.session_state.desafios),
+        "titulo": titulo,
+        "descricao": descricao,
+        "criador_id": criador_id,
+        "disciplina_id": disciplina_id,
+        "data_criacao": datetime.now(),
+        "data_limite": data_limite
+    })
+    return "ok"
+
+def listar_desafios():
+    return st.session_state.desafios
+
+def desafios_da_disciplina(disciplina_id):
+    return [d for d in st.session_state.desafios if d["disciplina_id"] == disciplina_id]
+
+# ─────────────────────────────────────────────
+# RESPOSTAS
+# ─────────────────────────────────────────────
+def criar_resposta(desafio_id, usuario_id, conteudo):
+    if not conteudo.strip():
+        return "A resposta não pode ser vazia"
+    st.session_state.respostas.append({
+        "id": proximo_id(st.session_state.respostas),
+        "desafio_id": desafio_id,
+        "usuario_id": usuario_id,
+        "conteudo": conteudo,
+        "data_resposta": datetime.now()
+    })
+    return "ok"
+
+def respostas_do_desafio(desafio_id):
+    return [r for r in st.session_state.respostas if r["desafio_id"] == desafio_id]
+
+# ─────────────────────────────────────────────
+# VOTOS
+# ─────────────────────────────────────────────
+def votar(resposta_id, usuario_id):
+    for v in st.session_state.votos:
+        if v["resposta_id"] == resposta_id and v["usuario_id"] == usuario_id:
+            return "Você já votou nesta resposta"
+    st.session_state.votos.append({
+        "id": proximo_id(st.session_state.votos),
+        "resposta_id": resposta_id,
+        "usuario_id": usuario_id,
+        "criado_em": datetime.now()
+    })
+    return "ok"
+
+def contar_votos(resposta_id):
+    return len([v for v in st.session_state.votos if v["resposta_id"] == resposta_id])
+
+# ─────────────────────────────────────────────
+# HELPERS DE EXIBIÇÃO
+# ─────────────────────────────────────────────
+def nome_usuario(usuario_id):
     for u in st.session_state.usuarios:
-        if u["id"] == id_usuario:
-            u["senha"] = criptografar_senha(nova_senha)
-            return "ok"
+        if u["id"] == usuario_id:
+            return u["nome"]
+    return "Desconhecido"
 
-    return "Erro ao atualizar"
+def nome_disciplina(disciplina_id):
+    for d in st.session_state.disciplinas:
+        if d["id"] == disciplina_id:
+            return d["nome"]
+    return "Desconhecida"
 
-def remover_usuario(id_usuario):
-    st.session_state.usuarios = [
-        u for u in st.session_state.usuarios if u["id"] != id_usuario
-    ]
+def nome_curso(curso_id):
+    for c in st.session_state.cursos:
+        if c["id"] == curso_id:
+            return c["nome"]
+    return "Desconhecido"
 
-# INTERFACE PRINCIPAL
-st.title("Sistema de Login")
+# ─────────────────────────────────────────────
+# INTERFACE
+# ─────────────────────────────────────────────
+st.title("🎓 Plataforma de Desafios Acadêmicos")
 
-menu = ["Login", "Cadastrar", "Usuários"]
-opcao = st.sidebar.selectbox("Menu", menu)
+# Menu lateral
+if st.session_state.usuario_logado:
+    u = st.session_state.usuario_logado
+    st.sidebar.success(f"Logado como: **{u['nome']}**\n\n`{u['tipo_usuario']}`")
+    if st.sidebar.button("Sair"):
+        st.session_state.usuario_logado = None
+        st.rerun()
 
+    menu_logado = ["Desafios", "Responder Desafio", "Criar Desafio"]
+    if u["tipo_usuario"] == "professor":
+        menu_logado += ["Gerenciar Cursos", "Gerenciar Disciplinas"]
+    if u["tipo_usuario"] == "admin":
+        menu_logado += ["Gerenciar Cursos", "Gerenciar Disciplinas", "Usuários"]
+
+    opcao = st.sidebar.selectbox("Menu", menu_logado)
+
+else:
+    opcao = st.sidebar.selectbox("Menu", ["Login", "Cadastrar"])
+
+# ─────────────────────────────────────────────
 # TELA DE LOGIN
+# ─────────────────────────────────────────────
 if opcao == "Login":
     st.subheader("Entrar")
-
-    usuario = st.text_input("Usuário")
+    email = st.text_input("E-mail")
     senha = st.text_input("Senha", type="password")
 
     if st.button("Entrar"):
-        usuario_encontrado = verificar_login(usuario, senha)
+        usuario_encontrado = verificar_login(email, senha)
         if usuario_encontrado:
-            st.success(f"Bem-vindo, {usuario}!")
+            st.session_state.usuario_logado = usuario_encontrado
+            st.success(f"Bem-vindo, {usuario_encontrado['nome']}!")
+            st.rerun()
         else:
-            st.error("Usuário ou senha inválidos")
+            st.error("E-mail ou senha inválidos")
 
+# ─────────────────────────────────────────────
 # TELA DE CADASTRO
+# ─────────────────────────────────────────────
 elif opcao == "Cadastrar":
     st.subheader("Criar conta")
-
-    novo_usuario = st.text_input("Usuário")
-    nova_senha = st.text_input("Senha", type="password")
+    nome = st.text_input("Nome completo")
+    email = st.text_input("E-mail")
+    senha = st.text_input("Senha", type="password")
+    tipo = st.selectbox("Tipo de usuário", ["aluno", "professor", "admin"])
 
     if st.button("Cadastrar"):
-        resultado = criar_usuario(novo_usuario, nova_senha)
-
+        resultado = criar_usuario(nome, email, senha, tipo)
         if resultado == "ok":
-            st.success("Conta criada com sucesso!")
+            st.success("Conta criada com sucesso! Faça login.")
         else:
             st.error(resultado)
 
-# TELA DE USUÁRIO
-elif opcao == "Usuários":
-    st.subheader("Lista de usuários")
+# ─────────────────────────────────────────────
+# TELA DE DESAFIOS
+# ─────────────────────────────────────────────
+elif opcao == "Desafios":
+    st.subheader("Desafios disponíveis")
 
-    lista_usuarios = listar_usuarios()
+    desafios = listar_desafios()
+    if not desafios:
+        st.info("Nenhum desafio cadastrado ainda.")
+    else:
+        for d in desafios:
+            with st.expander(f"📌 {d['titulo']} — {nome_disciplina(d['disciplina_id'])}"):
+                st.write(d["descricao"] or "Sem descrição")
+                st.caption(f"Criado por: {nome_usuario(d['criador_id'])} | "
+                           f"Criado em: {d['data_criacao'].strftime('%d/%m/%Y %H:%M')} | "
+                           f"Limite: {d['data_limite'].strftime('%d/%m/%Y') if d['data_limite'] else 'Sem prazo'}")
 
-    for usuario_item in lista_usuarios:
-        col1, col2, col3 = st.columns(3)
+                respostas = respostas_do_desafio(d["id"])
+                st.markdown(f"**{len(respostas)} resposta(s)**")
 
-        with col1:
-            st.write(usuario_item["usuario"])
+                for r in respostas:
+                    votos = contar_votos(r["id"])
+                    st.markdown(f"> {r['conteudo']}")
+                    st.caption(f"Por: {nome_usuario(r['usuario_id'])} | "
+                               f"{r['data_resposta'].strftime('%d/%m/%Y %H:%M')} | "
+                               f"👍 {votos} voto(s)")
 
-        with col2:
-            nova_senha = st.text_input(
-                "Nova senha",
-                type="password",
-                key=f"senha{usuario_item['id']}"
+                    if st.button("👍 Votar", key=f"votar_{r['id']}"):
+                        resultado = votar(r["id"], st.session_state.usuario_logado["id"])
+                        if resultado == "ok":
+                            st.success("Voto registrado!")
+                            st.rerun()
+                        else:
+                            st.warning(resultado)
+
+# ─────────────────────────────────────────────
+# TELA RESPONDER DESAFIO
+# ─────────────────────────────────────────────
+elif opcao == "Responder Desafio":
+    st.subheader("Responder um desafio")
+
+    desafios = listar_desafios()
+    if not desafios:
+        st.info("Nenhum desafio disponível.")
+    else:
+        opcoes = {d["titulo"]: d["id"] for d in desafios}
+        titulo_selecionado = st.selectbox("Escolha o desafio", list(opcoes.keys()))
+        desafio_id = opcoes[titulo_selecionado]
+
+        conteudo = st.text_area("Sua resposta")
+
+        if st.button("Enviar resposta"):
+            resultado = criar_resposta(desafio_id, st.session_state.usuario_logado["id"], conteudo)
+            if resultado == "ok":
+                st.success("Resposta enviada!")
+            else:
+                st.error(resultado)
+
+# ─────────────────────────────────────────────
+# TELA CRIAR DESAFIO
+# ─────────────────────────────────────────────
+elif opcao == "Criar Desafio":
+    st.subheader("Criar novo desafio")
+
+    disciplinas = listar_disciplinas()
+    if not disciplinas:
+        st.warning("Nenhuma disciplina cadastrada. Peça ao professor ou admin para criar.")
+    else:
+        titulo = st.text_input("Título do desafio")
+        descricao = st.text_area("Descrição")
+        opcoes_disc = {f"{d['nome']} ({nome_curso(d['curso_id'])})": d["id"] for d in disciplinas}
+        disc_selecionada = st.selectbox("Disciplina", list(opcoes_disc.keys()))
+        data_limite = st.date_input("Data limite (opcional)", value=None)
+
+        if st.button("Criar desafio"):
+            dl = datetime.combine(data_limite, datetime.min.time()) if data_limite else None
+            resultado = criar_desafio(
+                titulo, descricao,
+                st.session_state.usuario_logado["id"],
+                opcoes_disc[disc_selecionada],
+                dl
             )
-            if st.button("Atualizar", key=f"atualizar{usuario_item['id']}"):
-                resultado = atualizar_senha(usuario_item["id"], nova_senha)
+            if resultado == "ok":
+                st.success("Desafio criado!")
+            else:
+                st.error(resultado)
 
-                if resultado == "ok":
-                    st.success("Senha atualizada")
-                else:
-                    st.error(resultado)
+# ─────────────────────────────────────────────
+# TELA GERENCIAR CURSOS
+# ─────────────────────────────────────────────
+elif opcao == "Gerenciar Cursos":
+    st.subheader("Cursos")
 
+    nome_curso_input = st.text_input("Nome do novo curso")
+    if st.button("Adicionar curso"):
+        resultado = criar_curso(nome_curso_input)
+        if resultado == "ok":
+            st.success("Curso criado!")
+        else:
+            st.error(resultado)
+
+    st.divider()
+    cursos = listar_cursos()
+    if not cursos:
+        st.info("Nenhum curso cadastrado.")
+    else:
+        for c in cursos:
+            st.write(f"📚 **{c['nome']}** (ID: {c['id']})")
+
+# ─────────────────────────────────────────────
+# TELA GERENCIAR DISCIPLINAS
+# ─────────────────────────────────────────────
+elif opcao == "Gerenciar Disciplinas":
+    st.subheader("Disciplinas")
+
+    cursos = listar_cursos()
+    if not cursos:
+        st.warning("Crie um curso primeiro.")
+    else:
+        nome_disc = st.text_input("Nome da disciplina")
+        opcoes_curso = {c["nome"]: c["id"] for c in cursos}
+        curso_selecionado = st.selectbox("Curso", list(opcoes_curso.keys()))
+
+        if st.button("Adicionar disciplina"):
+            resultado = criar_disciplina(nome_disc, opcoes_curso[curso_selecionado])
+            if resultado == "ok":
+                st.success("Disciplina criada!")
+            else:
+                st.error(resultado)
+
+        st.divider()
+        for c in cursos:
+            discs = disciplinas_do_curso(c["id"])
+            if discs:
+                st.markdown(f"**{c['nome']}**")
+                for d in discs:
+                    st.write(f"  📖 {d['nome']}")
+
+# ─────────────────────────────────────────────
+# TELA DE USUÁRIOS (admin)
+# ─────────────────────────────────────────────
+elif opcao == "Usuários":
+    st.subheader("Usuários cadastrados")
+
+    for u in st.session_state.usuarios:
+        col1, col2, col3 = st.columns(3)
+        with col1:
+            st.write(u["nome"])
+        with col2:
+            st.write(u["email"])
         with col3:
-            if st.button("Remover", key=f"remover{usuario_item['id']}"):
-                remover_usuario(usuario_item["id"])
-                st.warning("Usuário removido")
+            st.write(u["tipo_usuario"])
