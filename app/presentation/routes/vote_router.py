@@ -28,19 +28,19 @@ from app.infrastructure.rate_limiter.rate_limit_config import limiter
 from pydantic import BaseModel
 
 
-# 🔥 NOVO: Enum para opções de voto
+# NOVO: Enum para opções de voto
 class VoteOption(str, Enum):
     BOM = "BOM"
     REGULAR = "REGULAR"
     RUIM = "RUIM"
 
 
-# 🔥 NOVO: Schema adaptado
+# NOVO: Schema adaptado
 class VoteRequestSchema(BaseModel):
     score: VoteOption
 
 
-# 🔥 NOVO: Mapeamento interno (texto → número)
+# NOVO: Mapeamento interno (texto → número)
 VOTE_MAPPING = {
     VoteOption.RUIM: 1.0,
     VoteOption.REGULAR: 5.0,
@@ -96,7 +96,7 @@ async def create_vote(
     use_case = _get_register_use_case(request)
 
     try:
-        # 🔥 CONVERSÃO: texto → número
+        # CONVERSÃO: texto → número
         mapped_score = VOTE_MAPPING[payload.score]
 
         input_dto = RegisterVoteInputDTO(score=mapped_score)
