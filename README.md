@@ -1,5 +1,5 @@
-# Challenge_system
-MAIN
+# front3-votacao
+
 Objetivo:
 Organizar e finalizar a tela de votação do sistema conforme o MVP.
 
