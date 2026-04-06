@@ -1,4 +1,4 @@
-# front3-votacao
+# Front-end 3 - votação
 
 Objetivo:
 Organizar e finalizar a tela de votação do sistema conforme o MVP.
