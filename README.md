@@ -3,20 +3,9 @@
 Objetivo:
 Organizar e finalizar a tela de votação do sistema conforme o MVP.
 
-Funcionalidades esperadas:
+Funcionalidades esperadas: Exibir desafio, permitir voto (Bom, Regular e Ruim), permitir apenas uma opção, botão para envio e Mensagens de "erro" e "sucesso".
 
-Exibir desafio
-Permitir voto:
-(Bom,
-Regular e
-Ruim)
-Permitir apenas uma opção
-Botão para envio
-Mensagens de erro e sucesso
-
-Situação atual:
-Tela já implementada em Streamlit
-Necessário testes e alguns ajustes de UX
+Situação atual: Tela já implementada em Streamlit. Necessário testes e alguns ajustes de UX
 
 Para visualização no streamlit: https://challengesystem-2yk77wavtez9wdzaskpaut.streamlit.app/
 
