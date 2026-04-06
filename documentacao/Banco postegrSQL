@@ -1,65 +1,45 @@
-CREATE EXTENSION IF NOT EXISTS "pgcrypto";
-
--- =========================
--- TABELA USUARIOS
--- =========================
-CREATE TABLE usuarios (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    nome TEXT NOT NULL,
-    email TEXT UNIQUE NOT NULL,
-    senha TEXT NOT NULL,
-    tipo_usuario TEXT NOT NULL,
-    criado_em TIMESTAMPTZ DEFAULT NOW()
-);
-
--- =========================
--- TABELA CURSOS
--- =========================
 CREATE TABLE cursos (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    id SERIAL PRIMARY KEY,
     nome TEXT NOT NULL
 );
 
--- =========================
--- TABELA DISCIPLINAS
--- =========================
 CREATE TABLE disciplinas (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    id SERIAL PRIMARY KEY,
     nome TEXT NOT NULL,
-    curso_id UUID REFERENCES cursos(id)
+    curso_id INT REFERENCES cursos(id)
 );
 
--- =========================
--- TABELA DESAFIOS
--- =========================
+CREATE TABLE usuarios (
+    id SERIAL PRIMARY KEY,
+    nome TEXT NOT NULL,
+    email TEXT NOT NULL UNIQUE,
+    senha TEXT NOT NULL,
+    tipo_usuario TEXT,
+    criado_em TIMESTAMPTZ DEFAULT NOW()
+);
+
 CREATE TABLE desafios (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    id SERIAL PRIMARY KEY,
     titulo TEXT NOT NULL,
     descricao TEXT,
-    criador_id UUID REFERENCES usuarios(id),
-    disciplina_id UUID REFERENCES disciplinas(id),
+    criador_id INT REFERENCES usuarios(id),
+    disciplina_id INT REFERENCES disciplinas(id),
     data_criacao TIMESTAMPTZ DEFAULT NOW(),
     data_limite TIMESTAMPTZ
 );
 
--- =========================
--- TABELA RESPOSTAS
--- =========================
 CREATE TABLE respostas (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    desafio_id UUID REFERENCES desafios(id) ON DELETE CASCADE,
-    usuario_id UUID REFERENCES usuarios(id),
-    conteudo TEXT NOT NULL,
+    id SERIAL PRIMARY KEY,
+    desafio_id INT REFERENCES desafios(id),
+    usuario_id INT REFERENCES usuarios(id),
+    conteudo TEXT,
     data_resposta TIMESTAMPTZ DEFAULT NOW()
 );
 
--- =========================
--- TABELA VOTOS
--- =========================
 CREATE TABLE votos (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    resposta_id UUID REFERENCES respostas(id) ON DELETE CASCADE,
-    usuario_id UUID REFERENCES usuarios(id),
+    id SERIAL PRIMARY KEY,
+    resposta_id INT REFERENCES respostas(id),
+    usuario_id INT REFERENCES usuarios(id),
     criado_em TIMESTAMPTZ DEFAULT NOW(),
-    UNIQUE(resposta_id, usuario_id)
+    UNIQUE (resposta_id, usuario_id)
 );
