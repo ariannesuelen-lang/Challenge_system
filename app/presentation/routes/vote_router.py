@@ -1,6 +1,7 @@
 # app/presentation/routes/vote_router.py
 from fastapi import APIRouter, HTTPException, Request, status, Depends
 from typing import cast, Annotated
+from enum import Enum
 
 from app.application.dtos.vote_dtos import (
     RegisterVoteInputDTO,
@@ -18,13 +19,34 @@ from app.domain.exceptions.vote_exceptions import (
     VoteDomainError,
 )
 from app.presentation.schemas.vote_schema import (
-    VoteRequestSchema,
     VoteResponseSchema,
     VoteStatsResponseSchema,
     VoteListResponseSchema,
     ErrorResponseSchema,
 )
 from app.infrastructure.rate_limiter.rate_limit_config import limiter
+from pydantic import BaseModel
+
+
+# 🔥 NOVO: Enum para opções de voto
+class VoteOption(str, Enum):
+    BOM = "BOM"
+    REGULAR = "REGULAR"
+    RUIM = "RUIM"
+
+
+# 🔥 NOVO: Schema adaptado
+class VoteRequestSchema(BaseModel):
+    score: VoteOption
+
+
+# 🔥 NOVO: Mapeamento interno (texto → número)
+VOTE_MAPPING = {
+    VoteOption.RUIM: 1.0,
+    VoteOption.REGULAR: 5.0,
+    VoteOption.BOM: 10.0,
+}
+
 
 vote_router = APIRouter(prefix="/api/v1/votes", tags=["Votacao"])
 
@@ -66,20 +88,27 @@ async def create_vote(
     payload: Annotated[VoteRequestSchema, Depends()],
 ):
     """
-    Registra um novo voto com nota de 0 a 10.
-    O minimo aceito para registro e 0.2.
+    Registra um novo voto usando categorias:
+    - BOM
+    - REGULAR
+    - RUIM
     """
     use_case = _get_register_use_case(request)
 
     try:
-        input_dto = RegisterVoteInputDTO(score=payload.score)
+        # 🔥 CONVERSÃO: texto → número
+        mapped_score = VOTE_MAPPING[payload.score]
+
+        input_dto = RegisterVoteInputDTO(score=mapped_score)
         result = use_case.execute(input_dto)
+
         return VoteResponseSchema(
             vote_id=result.vote_id,
             score=result.score,
             created_at=result.created_at,
-            message="Voto registrado com sucesso.",
+            message=f"Voto '{payload.score}' registrado com sucesso.",
         )
+
     except VoteBelowMinimumError as exc:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -130,6 +159,7 @@ async def list_votes(request: Request):
     """Retorna todos os votos registrados."""
     use_case = _get_list_use_case(request)
     result = use_case.execute()
+
     vote_responses = [
         VoteResponseSchema(
             vote_id=v.vote_id,
@@ -139,6 +169,7 @@ async def list_votes(request: Request):
         )
         for v in result.votes
     ]
+
     return VoteListResponseSchema(votes=vote_responses, total=result.total)
 
 
@@ -157,6 +188,7 @@ async def get_statistics(request: Request):
     """Retorna estatisticas agregadas dos votos."""
     use_case = _get_stats_use_case(request)
     result = use_case.execute()
+
     return VoteStatsResponseSchema(
         total_votes=result.total_votes,
         average_score=result.average_score,
