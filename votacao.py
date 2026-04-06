@@ -50,7 +50,7 @@ elif st.session_state.pagina == 'votacao':
     # Criando os checkboxes lado a lado
     col1, col2, col3 = st.columns(3)
     with col1:
-      bom = st.checkbox("Bom")
+      bom = st.checkbox("Bonzinho")
     with col2:
       regular = st.checkbox("Regular")
     with col3:
