@@ -15,7 +15,7 @@ def ir_para_lista():
 # --- HEADER (Comum às duas páginas) ---
 col_logo, col_user = st.columns([4, 1])
 with col_user:
-  st.markdown("👤 *Aluno*")
+  st.markdown("👤 *Alunos*")
 st.divider()
 
 # --- PÁGINA 01: LISTA DE DESAFIOS ---
