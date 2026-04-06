@@ -1,32 +1,27 @@
 # app/presentation/schemas/vote_schema.py
-from pydantic import BaseModel, Field, model_validator
+from pydantic import BaseModel, Field
 from typing import Optional
+from enum import Enum
+
+
+# NOVO: Enum para opções de voto
+class VoteOption(str, Enum):
+    BOM = "BOM"
+    REGULAR = "REGULAR"
+    RUIM = "RUIM"
 
 
 class VoteRequestSchema(BaseModel):
     """Schema de entrada para registro de voto."""
 
-    score: float = Field(
+    score: VoteOption = Field(
         ...,
-        ge=0.0,
-        le=10.0,
-        description="Nota de 0 a 10. O minimo aceito para registro e 0.2.",
+        description="Escolha entre: BOM, REGULAR ou RUIM.",
     )
-
-    @model_validator(mode='after')
-    def validate_minimum_score(self) -> 'VoteRequestSchema':
-        """Validacao adicional: nota minima para registro e 0.2"""
-        from app.config import settings
-        if self.score < settings.min_vote_score:
-            raise ValueError(
-                f"A nota informada ({self.score}) e inferior ao minimo permitido "
-                f"({settings.min_vote_score})."
-            )
-        return self
 
     class Config:
         json_schema_extra = {
-            "example": {"score": 8.5}
+            "example": {"score": "BOM"}
         }
 
 
@@ -42,9 +37,9 @@ class VoteResponseSchema(BaseModel):
         json_schema_extra = {
             "example": {
                 "vote_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
-                "score": 8.5,
+                "score": 10.0,
                 "created_at": "2025-01-01T00:00:00+00:00",
-                "message": "Voto registrado com sucesso.",
+                "message": "Voto 'BOM' registrado com sucesso.",
             }
         }
 
