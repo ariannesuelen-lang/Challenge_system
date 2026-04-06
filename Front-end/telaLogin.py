@@ -1,0 +1,131 @@
+import streamlit as st
+import hashlib
+import re
+
+# "BANCO" EM MEMÓRIA
+if "usuarios" not in st.session_state:
+    st.session_state.usuarios = []
+
+# FUNÇÕES DO CODIGO
+def criptografar_senha(senha):
+    return hashlib.sha256(senha.encode()).hexdigest()
+
+def senha_valida(senha):
+    if len(senha) < 8:
+        return "A senha deve ter no mínimo 8 caracteres"
+    if not re.search(r"[A-Z]", senha):
+        return "A senha deve conter pelo menos 1 letra maiúscula"
+    if not re.search(r"\d", senha):
+        return "A senha deve conter pelo menos 1 número"
+    return "ok"
+
+def criar_usuario(usuario, senha):
+    try:
+        validacao = senha_valida(senha)
+        if validacao != "ok":
+            return validacao
+
+        for u in st.session_state.usuarios:
+            if u["usuario"] == usuario:
+                return "Usuário já existe"
+
+        st.session_state.usuarios.append({
+            "id": len(st.session_state.usuarios) + 1,
+            "usuario": usuario,
+            "senha": criptografar_senha(senha)
+        })
+        return "ok"
+    except:
+        return "Erro ao criar usuário"
+
+def verificar_login(usuario, senha):
+    for u in st.session_state.usuarios:
+        if u["usuario"] == usuario and u["senha"] == criptografar_senha(senha):
+            return u
+    return None
+
+def listar_usuarios():
+    return st.session_state.usuarios
+
+def atualizar_senha(id_usuario, nova_senha):
+    validacao = senha_valida(nova_senha)
+    if validacao != "ok":
+        return validacao
+
+    for u in st.session_state.usuarios:
+        if u["id"] == id_usuario:
+            u["senha"] = criptografar_senha(nova_senha)
+            return "ok"
+
+    return "Erro ao atualizar"
+
+def remover_usuario(id_usuario):
+    st.session_state.usuarios = [
+        u for u in st.session_state.usuarios if u["id"] != id_usuario
+    ]
+
+# INTERFACE PRINCIPAL
+st.title("Sistema de Login")
+
+menu = ["Login", "Cadastrar", "Usuários"]
+opcao = st.sidebar.selectbox("Menu", menu)
+
+# TELA DE LOGIN
+if opcao == "Login":
+    st.subheader("Entrar")
+
+    usuario = st.text_input("Usuário")
+    senha = st.text_input("Senha", type="password")
+
+    if st.button("Entrar"):
+        usuario_encontrado = verificar_login(usuario, senha)
+        if usuario_encontrado:
+            st.success(f"Bem-vindo, {usuario}!")
+        else:
+            st.error("Usuário ou senha inválidos")
+
+# TELA DE CADASTRO
+elif opcao == "Cadastrar":
+    st.subheader("Criar conta")
+
+    novo_usuario = st.text_input("Usuário")
+    nova_senha = st.text_input("Senha", type="password")
+
+    if st.button("Cadastrar"):
+        resultado = criar_usuario(novo_usuario, nova_senha)
+
+        if resultado == "ok":
+            st.success("Conta criada com sucesso!")
+        else:
+            st.error(resultado)
+
+# TELA DE USUÁRIO
+elif opcao == "Usuários":
+    st.subheader("Lista de usuários")
+
+    lista_usuarios = listar_usuarios()
+
+    for usuario_item in lista_usuarios:
+        col1, col2, col3 = st.columns(3)
+
+        with col1:
+            st.write(usuario_item["usuario"])
+
+        with col2:
+            nova_senha = st.text_input(
+                "Nova senha",
+                type="password",
+                key=f"senha{usuario_item['id']}"
+            )
+            if st.button("Atualizar", key=f"atualizar{usuario_item['id']}"):
+                resultado = atualizar_senha(usuario_item["id"], nova_senha)
+
+                if resultado == "ok":
+                    st.success("Senha atualizada")
+                else:
+                    st.error(resultado)
+
+        with col3:
+            if st.button("Remover", key=f"remover{usuario_item['id']}"):
+                remover_usuario(usuario_item["id"])
+                st.warning("Usuário removido")
