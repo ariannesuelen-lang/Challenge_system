@@ -1,0 +1,81 @@
+# =========================
+# CREDENCIAIS
+# =========================
+.env
+.env.*
+!.env.example
+
+# =========================
+# PYTHON
+# =========================
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+
+# =========================
+# AMBIENTES VIRTUAIS
+# =========================
+.venv/
+venv/
+env/
+ENV/
+
+# =========================
+# DEPENDÊNCIAS
+# =========================
+*.egg-info/
+dist/
+build/
+*.egg
+
+# =========================
+# BANCO DE DADOS LOCAL
+# =========================
+*.db
+*.sqlite
+*.sqlite3
+
+# =========================
+# LOGS
+# =========================
+*.log
+logs/
+
+# =========================
+# SISTEMA OPERACIONAL
+# =========================
+# Windows
+Thumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# macOS
+.DS_Store
+.AppleDouble
+
+# Linux
+*~
+
+# =========================
+# EDITORES / IDEs
+# =========================
+.vscode/
+.idea/
+*.swp
+*.swo
+*.suo
+*.user
+
+# =========================
+# STREAMLIT
+# =========================
+.streamlit/secrets.toml
+
+# =========================
+# PYTEST / COBERTURA
+# =========================
+.pytest_cache/
+.coverage
+htmlcov/
