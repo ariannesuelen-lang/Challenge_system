@@ -6,7 +6,6 @@ from enum import Enum
 from app.application.dtos.vote_dtos import (
     RegisterVoteInputDTO,
     VoteStatisticsOutputDTO,
-    VoteListOutputDTO,
 )
 from app.application.use_cases.register_vote_use_case import (
     RegisterVoteUseCase,
@@ -21,7 +20,6 @@ from app.domain.exceptions.vote_exceptions import (
 from app.presentation.schemas.vote_schema import (
     VoteResponseSchema,
     VoteStatsResponseSchema,
-    VoteListResponseSchema,
     ErrorResponseSchema,
 )
 from app.infrastructure.rate_limiter.rate_limit_config import limiter
@@ -147,30 +145,7 @@ async def create_vote(
         )
 
 
-@vote_router.get(
-    "/",
-    response_model=VoteListResponseSchema,
-    responses={
-        200: {"model": VoteListResponseSchema, "description": "Lista de votos"},
-    },
-)
-@limiter.limit("20/minute")
-async def list_votes(request: Request):
-    """Retorna todos os votos registrados."""
-    use_case = _get_list_use_case(request)
-    result = use_case.execute()
 
-    vote_responses = [
-        VoteResponseSchema(
-            vote_id=v.vote_id,
-            score=v.score,
-            created_at=v.created_at,
-            message="",
-        )
-        for v in result.votes
-    ]
-
-    return VoteListResponseSchema(votes=vote_responses, total=result.total)
 
 
 @vote_router.get(
