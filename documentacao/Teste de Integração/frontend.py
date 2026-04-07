@@ -109,6 +109,8 @@ def tela_acesso():
         # Só habilita o botão se todos os critérios forem atendidos
         campos_validos = campos_preenchidos and email_valido and senha_criterios
 
+        placeholder_cadastro = st.empty()
+
         if st.button("Criar conta", disabled=not campos_validos):
             res = post("/usuarios", {
                 "nome": nome,
@@ -117,19 +119,18 @@ def tela_acesso():
                 "tipo_usuario": tipo
             })
 
-            if res:
-                if res.status_code == 200:
-                    st.success("Conta criada! Faça login para continuar.")
-                else:
-                    try:
-                        detalhe = res.json().get("detail", "")
-                    except:
-                        detalhe = ""
-
-                    if "email" in detalhe.lower() and "exist" in detalhe.lower():
-                        st.error("Este email já está cadastrado!")
-                    else:
-                        st.error(detalhe or "Erro ao criar conta")
+            if res is None:
+                placeholder_cadastro.error("Não foi possível conectar ao servidor. Tente novamente.")
+            elif res.status_code == 200:
+                placeholder_cadastro.success("Conta criada! Faça login para continuar.")
+            elif res.status_code == 409:
+                placeholder_cadastro.error("Este email já está cadastrado!")
+            else:
+                try:
+                    detalhe = res.json().get("detail", "")
+                except:
+                    detalhe = ""
+                placeholder_cadastro.error(detalhe or "Erro ao criar conta.")
 
 # =========================
 # PÁGINAS
