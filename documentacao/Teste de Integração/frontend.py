@@ -1,5 +1,6 @@
 import streamlit as st
 import requests
+import re
 
 BASE_URL = "http://localhost:8000"
 
@@ -58,6 +59,7 @@ def tela_acesso():
     st.title("🎓 Sistema Acadêmico")
     aba = st.tabs(["Entrar", "Cadastrar"])
 
+    # --- Aba de Login ---
     with aba[0]:
         st.subheader("Login")
         email = st.text_input("Email", key="login_email")
@@ -73,18 +75,61 @@ def tela_acesso():
             elif res:
                 st.error(res.json().get("detail", "Credenciais inválidas"))
 
+    # --- Aba de Cadastro ---
     with aba[1]:
         st.subheader("Criar conta")
         nome = st.text_input("Nome completo", key="cad_nome")
         email_c = st.text_input("Email", key="cad_email")
         senha_c = st.text_input("Senha", type="password", key="cad_senha")
         tipo = st.selectbox("Tipo de conta", ["aluno", "professor"], key="cad_tipo")
-        if st.button("Criar conta"):
-            res = post("/usuarios", {"nome": nome, "email": email_c, "senha": senha_c, "tipo_usuario": tipo})
-            if res and res.status_code == 200:
-                st.success("Conta criada! Faça login para continuar.")
-            elif res:
-                st.error(res.json().get("detail", "Erro ao criar conta"))
+
+        # =========================
+        # Validação de campos
+        # =========================
+        campos_preenchidos = all([nome.strip(), email_c.strip(), senha_c.strip()])
+        
+        # Validação de email
+        email_valido = re.match(r"[^@]+@[^@]+\.[^@]+", email_c)
+
+        if email_c and not email_valido:
+            st.warning("Digite um email válido!")
+
+        # Validação de senha
+        # Critérios: mínimo 8 caracteres, 1 letra maiúscula, 1 número, 1 caractere especial
+        senha_criterios = (
+            len(senha_c) >= 8 and
+            re.search(r"[A-Z]", senha_c) and
+            re.search(r"[0-9]", senha_c) and
+            re.search(r"[!@#$%^&*(),.?\":{}|<>]", senha_c)
+        )
+
+        if senha_c and not senha_criterios:
+            st.warning("Senha deve ter pelo menos 8 caracteres, 1 letra maiúscula, 1 número e 1 caractere especial!")
+
+        # Só habilita o botão se todos os critérios forem atendidos
+        campos_validos = campos_preenchidos and email_valido and senha_criterios
+
+        if st.button("Criar conta", disabled=not campos_validos):
+            res = post("/usuarios", {
+                "nome": nome,
+                "email": email_c,
+                "senha": senha_c,
+                "tipo_usuario": tipo
+            })
+
+            if res:
+                if res.status_code == 200:
+                    st.success("Conta criada! Faça login para continuar.")
+                else:
+                    try:
+                        detalhe = res.json().get("detail", "")
+                    except:
+                        detalhe = ""
+
+                    if "email" in detalhe.lower() and "exist" in detalhe.lower():
+                        st.error("Este email já está cadastrado!")
+                    else:
+                        st.error(detalhe or "Erro ao criar conta")
 
 # =========================
 # PÁGINAS
