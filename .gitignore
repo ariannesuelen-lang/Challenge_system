@@ -1,0 +1,53 @@
+#  Variáveis de ambiente (chaves, tokens, etc)
+.env
+.env.*
+*.env
+
+#  Arquivos de configuração sensíveis
+config.js
+config.json
+secrets.json
+
+# Caminhos locais / arquivos do sistema
+*.log
+*.tmp
+*.cache
+
+# Windows
+Thumbs.db
+Desktop.ini
+
+# Mac
+.DS_Store
+
+# Linux
+*~
+
+# Dependências (caso use futuramente)
+node_modules/
+
+# Arquivos de teste/local
+test/
+tests/
+*.spec.js
+
+#  Arquivos pessoais / caminhos locais
+/meu-caminho-local/
+/caminho-da-julia/
+/Users/
+/C:/
+D:/
+
+#  IDEs e editores
+.vscode/
+.idea/
+*.swp
+
+# Build / arquivos gerados
+dist/
+build/
+out/
+
+#  Backup
+*.bak
+*.old
