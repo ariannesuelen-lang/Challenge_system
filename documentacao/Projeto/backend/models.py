@@ -18,6 +18,7 @@ class DesafioCreate(BaseModel):
     titulo: str
     descricao: Optional[str] = None
     criador_id: int
+    criador_tipo: str  # "professor" ou "admin"
     disciplina_id: Optional[int] = None
     data_limite: Optional[str] = None
 
@@ -32,6 +33,7 @@ class DesafioUpdate(BaseModel):
 class RespostaCreate(BaseModel):
     desafio_id: int
     usuario_id: int
+    usuario_tipo: str  # "aluno", "professor" ou "admin"
     conteudo: str
 
 
@@ -47,3 +49,7 @@ class CursoCreate(BaseModel):
 class DisciplinaCreate(BaseModel):
     nome: str
     curso_id: int
+
+
+class UsuarioTipoUpdate(BaseModel):
+    novo_tipo: str  # "aluno" ou "professor"
