@@ -1,5 +1,6 @@
 import streamlit as st
 from supabase import create_client
+import pandas as pd
 
 # =========================
 # CONEXÃO COM SUPABASE
@@ -12,84 +13,202 @@ supabase = create_client(url, key)
 
 st.set_page_config(page_title="Votação de Desafios", layout="centered")
 
-# Inicializa o estado da página se não existir
+# =========================
+# CONTROLE DE ESTADO
+# =========================
+
 if 'pagina' not in st.session_state:
     st.session_state.pagina = 'lista'
 
-# --- FUNÇÕES DE NAVEGAÇÃO ---
-def ir_para_votacao():
-  st.session_state.pagina = 'votacao'
+if 'voto_id' not in st.session_state:
+    st.session_state.voto_id = None
 
-def ir_para_lista():
-  st.session_state.pagina = 'lista'
+if 'desafio' not in st.session_state:
+    st.session_state.desafio = None
 
-# --- HEADER ---
-col_logo, col_user = st.columns([4, 1])
-with col_user:
-  st.markdown("👤 *Alunos*")
+def ir(pagina):
+    st.session_state.pagina = pagina
+    st.rerun()
+
+# =========================
+# FUNÇÕES CRUD
+# =========================
+
+def inserir_voto(usuario, desafio, voto):
+    return supabase.table("votos").insert({
+        "usuario": usuario,
+        "desafio": desafio,
+        "voto": voto
+    }).execute()
+
+def listar_votos():
+    return supabase.table("votos").select("*").execute()
+
+def buscar_votos_por_desafio(desafio):
+    return supabase.table("votos").select("*").eq("desafio", desafio).execute()
+
+def buscar_voto_por_id(id):
+    return supabase.table("votos").select("*").eq("id", id).execute()
+
+def atualizar_voto(id, novo_voto):
+    return supabase.table("votos").update({
+        "voto": novo_voto
+    }).eq("id", id).execute()
+
+def deletar_voto(id):
+    return supabase.table("votos").delete().eq("id", id).execute()
+
+# =========================
+# HEADER
+# =========================
+
+col1, col2 = st.columns([4, 1])
+with col2:
+    st.markdown("👤 *Aluno*")
 
 st.divider()
 
-# --- PÁGINA LISTA ---
-if st.session_state.pagina == 'lista':
-    
-    with st.container(border=True):
-      st.write("### Desafio 01 - A Realidade vs. A Teoria")
-      st.caption("# em andamento")
-        
-      if st.button("Acessar Desafio", use_container_width=True):
-        ir_para_votacao()
-        st.rerun()
+# =========================
+# LISTA DE DESAFIOS
+# =========================
 
-# --- PÁGINA VOTAÇÃO ---
+if st.session_state.pagina == 'lista':
+
+    st.write("### Lista de Desafios")
+
+    desafios = [
+        "Desafio 01 - A Realidade vs. A Teoria",
+        "Desafio 02 - Testes Experimentais"
+    ]
+
+    for d in desafios:
+        with st.container(border=True):
+            st.write(f"### {d}")
+            st.caption("em andamento")
+
+            if st.button(f"Acessar {d}"):
+                st.session_state.desafio = d
+                ir('votacao')
+
+    st.divider()
+
+    if st.button("Ver votos cadastrados"):
+        ir('visualizar')
+
+# =========================
+# VOTAÇÃO + GRÁFICO
+# =========================
+
 elif st.session_state.pagina == 'votacao':
 
-    if st.button("← Voltar para lista"):
-      ir_para_lista()
-      st.rerun()
+    if st.button("← Voltar"):
+        ir('lista')
 
-    st.divider()
-    st.markdown("#### Desafio 01... | *Votação*")
-    
-    with st.expander("Ver detalhes do Desafio 01", expanded=True):
-      st.write("> *Por que isso acontece?*")
-      st.write("> Justifique sua resposta com base nos testes realizados.")
+    desafio = st.session_state.desafio
 
-    st.divider()
-    
-    st.write("### Escolha sua nota para a apresentação:")
-    
-    col1, col2, col3 = st.columns(3)
-    with col1:
-      bom = st.checkbox("Bom")
-    with col2:
-      regular = st.checkbox("Regular")
-    with col3:
-      ruim = st.checkbox("Ruim")
+    st.write(f"### {desafio} | Votação")
 
-    # =========================
-    # ENVIO PARA O BANCO
-    # =========================
+    voto = st.radio("Escolha sua nota:", ["Bom", "Regular", "Ruim"])
 
-    if st.button("Enviar Voto", type="primary"):
-
-      if sum([bom, regular, ruim]) > 1:
-        st.error("Por favor, selecione apenas uma opção.")
-
-      elif sum([bom, regular, ruim]) == 0:
-        st.warning("Selecione uma nota antes de enviar.")
-
-      else:
-        voto = "Bom" if bom else "Regular" if regular else "Ruim"
-
+    if st.button("Enviar Voto"):
         try:
-            supabase.table("votos").insert({
-                "usuario": "AlunoTeste",
-                "desafio": "Desafio 01",
-                "voto": voto
-            }).execute()
+            inserir_voto("AlunoTeste", desafio, voto)
+            st.success("Voto salvo com sucesso")
 
-            st.success(f"Voto '{voto}' enviado com sucesso!")
+            st.session_state.desafio = None
+            ir('lista')
 
         except Exception as e:
-            st.error(f"Erro ao salvar voto: {e}")
+            st.error(e)
+
+    # =========================
+    # GRÁFICO DE VOTOS
+    # =========================
+
+    st.divider()
+    st.write("### Resultado do Desafio")
+
+    dados = buscar_votos_por_desafio(desafio)
+
+    if dados.data:
+        df = pd.DataFrame(dados.data)
+
+        # conta quantos votos existem de cada tipo
+        contagem = df["voto"].value_counts()
+
+        # garante que todas opções apareçam
+        contagem = contagem.reindex(["Bom", "Regular", "Ruim"], fill_value=0)
+
+        st.bar_chart(contagem)
+
+    else:
+        st.info("Nenhum voto ainda")
+
+# =========================
+# VISUALIZAR VOTOS
+# =========================
+
+elif st.session_state.pagina == 'visualizar':
+
+    if st.button("← Voltar"):
+        ir('lista')
+
+    st.write("### Votos cadastrados")
+
+    dados = listar_votos()
+
+    if dados.data:
+        df = pd.DataFrame(dados.data)
+        st.write(df)
+
+        st.divider()
+
+        id_voto = st.number_input("Digite o ID do voto", step=1)
+
+        if st.button("Editar / Excluir"):
+            st.session_state.voto_id = id_voto
+            ir('editar')
+
+    else:
+        st.info("Nenhum voto encontrado")
+
+# =========================
+# EDITAR / EXCLUIR
+# =========================
+
+elif st.session_state.pagina == 'editar':
+
+    if st.button("← Voltar"):
+        ir('visualizar')
+
+    id_voto = st.session_state.voto_id
+
+    dados = buscar_voto_por_id(id_voto)
+
+    if dados.data:
+
+        voto_atual = dados.data[0]["voto"]
+        desafio = dados.data[0]["desafio"]
+
+        st.write(f"### {desafio} | Editar voto ID {id_voto}")
+
+        novo_voto = st.radio(
+            "Novo voto:",
+            ["Bom", "Regular", "Ruim"],
+            index=["Bom", "Regular", "Ruim"].index(voto_atual)
+        )
+
+        col1, col2 = st.columns(2)
+
+        with col1:
+            if st.button("Atualizar"):
+                atualizar_voto(id_voto, novo_voto)
+                st.success("Voto atualizado")
+
+        with col2:
+            if st.button("Excluir"):
+                deletar_voto(id_voto)
+                st.success("Voto excluído")
+
+    else:
+        st.error("Voto não encontrado")
