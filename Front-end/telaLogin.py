@@ -8,14 +8,21 @@ st.title("🛡️ Painel Administrativo (Simples)")
 # =========================
 # BANCO FAKE (simulação)
 # =========================
-usuarios = [
-    {"id": 1, "nome": "João", "email": "joao@email.com", "tipo": "aluno"},
-    {"id": 2, "nome": "Maria", "email": "maria@email.com", "tipo": "professor"},
-]
+if "usuarios" not in st.session_state:
+    st.session_state.usuarios = [
+        {"id": 1, "nome": "João", "email": "joao@email.com", "tipo": "aluno"},
+        {"id": 2, "nome": "Maria", "email": "maria@email.com", "tipo": "professor"},
+    ]
+
+usuarios = st.session_state.usuarios
 
 # =========================
 # SELEÇÃO DE USUÁRIO
 # =========================
+if not usuarios:
+    st.warning("Nenhum usuário cadastrado.")
+    st.stop()
+
 opcoes = {f"{u['nome']} ({u['email']})": u for u in usuarios}
 selecionado = st.selectbox("Selecione um usuário", list(opcoes.keys()))
 
@@ -38,7 +45,9 @@ with st.form("form_admin"):
 
     senha = st.text_input("Nova senha", type="password")
 
-    salvar = st.form_submit_button("💾 Salvar")
+    col1, col2 = st.columns(2)
+    salvar = col1.form_submit_button("💾 Salvar")
+    deletar = col2.form_submit_button("🗑️ Deletar")
 
 # =========================
 # VALIDAÇÕES
@@ -65,6 +74,13 @@ if salvar:
     usuario["tipo"] = tipo
 
     st.success("Usuário atualizado com sucesso!")
+    st.rerun()
 
-    st.write("📌 Dados atualizados:")
-    st.json(usuario)
+# =========================
+# DELETAR USUÁRIO
+# =========================
+if deletar:
+    st.session_state.usuarios = [u for u in usuarios if u["id"] != usuario["id"]]
+
+    st.warning("Usuário deletado!")
+    st.rerun()
