@@ -40,10 +40,11 @@ def inserir_voto(usuario, desafio, voto):
         "desafio": desafio,
         "voto": voto
     }).execute()
-
+@st.cache_data(ttl=30)
 def listar_votos():
     return supabase.table("votos").select("*").execute()
-
+    
+@st.cache_data(ttl=30)
 def buscar_votos_por_desafio(desafio):
     return supabase.table("votos").select("*").eq("desafio", desafio).execute()
 
