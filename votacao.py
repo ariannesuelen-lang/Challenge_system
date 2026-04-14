@@ -110,16 +110,32 @@ elif st.session_state.pagina == 'votacao':
 
     voto = st.radio("Escolha sua nota:", ["Bom", "Regular", "Ruim"])
 
-    if st.button("Enviar Voto"):
-        try:
+    # controle de envio
+if 'enviando' not in st.session_state:
+    st.session_state.enviando = False
+
+if st.button("Enviar Voto") and not st.session_state.enviando:
+
+    if voto is None:
+        st.warning("Selecione uma opção antes de enviar.")
+        st.stop()
+
+    st.session_state.enviando = True
+
+    try:
+        with st.spinner("Salvando voto..."):
             inserir_voto("AlunoTeste", desafio, voto)
-            st.success("Voto salvo com sucesso")
 
-            st.session_state.desafio = None
-            ir('lista')
+        st.success("Voto salvo com sucesso")
 
-        except Exception as e:
-            st.error(e)
+        st.session_state.enviando = False
+        st.session_state.desafio = None
+        ir('lista')
+
+    except Exception as e:
+        st.session_state.enviando = False
+        st.error("Erro ao salvar voto.")
+        st.exception(e)
 
     # =========================
     # GRÁFICO DE VOTOS
