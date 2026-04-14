@@ -156,8 +156,8 @@ if st.button("Enviar Voto") and not st.session_state.enviando:
         # garante que todas opções apareçam
         contagem = contagem.reindex(["Bom", "Regular", "Ruim"], fill_value=0)
 
-        st.bar_chart(contagem)
-
+        st.bar_chart(contagem, use_container_width=True)
+        
     else:
         st.info("Nenhum voto ainda")
 
@@ -181,6 +181,9 @@ elif st.session_state.pagina == 'visualizar':
         st.divider()
 
         id_voto = st.number_input("Digite o ID do voto", step=1)
+        if id_voto <= 0:
+           st.warning("Digite um ID válido.")
+           st.stop()
 
         if st.button("Editar / Excluir"):
             st.session_state.voto_id = id_voto
