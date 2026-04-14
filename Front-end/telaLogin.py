@@ -145,7 +145,7 @@ if st.session_state.pagina == "login":
             entrar  = st.form_submit_button("Entrar", use_container_width=True)
 
         if entrar:
-            encontrado = verificar_login(usuario, senha)
+            encontrado = verificar_login(email, senha)
             if encontrado:
                 st.session_state.usuario_logado = encontrado
                 st.success(f"Bem-vindo(a), {encontrado['nome']}!")
