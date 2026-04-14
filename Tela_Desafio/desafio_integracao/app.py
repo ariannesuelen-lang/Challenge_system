@@ -153,3 +153,4 @@ elif menu == "Atualizar":
                 
     except Exception as e:
         st.error(f"Erro ao tentar atualizar: {e}")
+        
