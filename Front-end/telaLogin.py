@@ -23,8 +23,6 @@ if "pagina" not in st.session_state:
     st.session_state.pagina = "login"
 if "usuario_logado" not in st.session_state:
     st.session_state.usuario_logado = None
-if "admin_logado" not in st.session_state:
-    st.session_state.admin_logado = False
 
 # ─────────────────────────────────────────
 # FUNÇÕES UTILITÁRIAS
@@ -46,7 +44,6 @@ def senha_valida(senha: str) -> str:
 # Colunas: id, nome, email, senha, tipo_usuario, criado_em
 # ─────────────────────────────────────────
 def verificar_login_usuario(email: str, senha: str):
-    """Login pelo e-mail (campo único identificador na tabela usuarios)."""
     res = (
         supabase.table("usuarios")
         .select("id, nome, email, tipo_usuario, criado_em")
@@ -86,27 +83,15 @@ def atualizar_usuario(id_usuario: int, nome: str, email: str, tipo_usuario: str,
         v = senha_valida(nova_senha)
         if v != "ok":
             return v
-        dados["senha"] = criptografar_senha(nova_senha)
+        dados["senha"] = criptografar_nova_senha(nova_senha)
     supabase.table("usuarios").update(dados).eq("id", id_usuario).execute()
     return "ok"
 
+def criptografar_nova_senha(senha: str) -> str:
+    return hashlib.sha256(senha.encode()).hexdigest()
+
 def remover_usuario(id_usuario: int):
     supabase.table("usuarios").delete().eq("id", id_usuario).execute()
-
-# ─────────────────────────────────────────
-# FUNÇÕES — TABELA: adm
-# Colunas: id, email, senha, nome
-# ─────────────────────────────────────────
-def verificar_login_admin(email: str, senha: str):
-    """Login do admin via tabela 'adm'."""
-    res = (
-        supabase.table("adm")
-        .select("id, nome, email")
-        .eq("email", email)
-        .eq("senha", criptografar_senha(senha))
-        .execute()
-    )
-    return res.data[0] if res.data else None
 
 # ─────────────────────────────────────────
 # BARRA LATERAL
@@ -114,16 +99,17 @@ def verificar_login_admin(email: str, senha: str):
 with st.sidebar:
     st.title("📋 Menu")
 
-    if st.session_state.admin_logado:
-        st.success("🛡️ Admin logado")
-        if st.button("🚪 Sair do Admin"):
-            st.session_state.admin_logado = False
-            st.session_state.pagina = "login"
-            st.rerun()
-    elif st.session_state.usuario_logado:
+    if st.session_state.usuario_logado:
         u = st.session_state.usuario_logado
         st.success(f"👤 {u['nome']}")
-        if st.button("🚪 Sair"):
+        st.caption(f"Tipo: {u['tipo_usuario']}")
+
+        if u.get("tipo_usuario") == "admin":
+            if st.button("🛡️ Painel Admin", use_container_width=True):
+                st.session_state.pagina = "admin"
+                st.rerun()
+
+        if st.button("🚪 Sair", use_container_width=True):
             st.session_state.usuario_logado = None
             st.session_state.pagina = "login"
             st.rerun()
@@ -133,13 +119,6 @@ with st.sidebar:
             st.rerun()
         if st.button("📝 Cadastrar", use_container_width=True):
             st.session_state.pagina = "cadastrar"
-            st.rerun()
-
-    st.markdown("---")
-
-    if not st.session_state.admin_logado:
-        if st.button("🛡️ Acesso Administrativo", use_container_width=True):
-            st.session_state.pagina = "admin_login"
             st.rerun()
 
 # ─────────────────────────────────────────
@@ -178,10 +157,10 @@ elif st.session_state.pagina == "cadastrar":
     st.title("📝 Criar Conta")
 
     with st.form("form_cadastro"):
-        nome          = st.text_input("Nome completo")
-        email         = st.text_input("E-mail")
-        tipo_usuario  = st.selectbox("Tipo", ["aluno", "professor"])
-        senha         = st.text_input("Senha", type="password")
+        nome         = st.text_input("Nome completo")
+        email        = st.text_input("E-mail")
+        tipo_usuario = st.selectbox("Tipo", ["aluno", "professor"])
+        senha        = st.text_input("Senha", type="password")
         st.caption("Mínimo 8 caracteres, 1 maiúscula, 1 número")
         cadastrar = st.form_submit_button("Criar conta", use_container_width=True)
 
@@ -198,52 +177,24 @@ elif st.session_state.pagina == "cadastrar":
                 st.error(resultado)
 
 # ─────────────────────────────────────────
-# PÁGINA: LOGIN DO ADMIN
-# ─────────────────────────────────────────
-elif st.session_state.pagina == "admin_login":
-    st.title("🛡️ Acesso Administrativo")
-
-    with st.form("form_admin_login"):
-        st.info("Área restrita. Insira as credenciais de administrador.")
-        adm_email = st.text_input("E-mail admin")
-        adm_senha = st.text_input("Senha admin", type="password")
-        col1, col2 = st.columns(2)
-        entrar   = col1.form_submit_button("Entrar",   use_container_width=True)
-        cancelar = col2.form_submit_button("Cancelar", use_container_width=True)
-
-    if entrar:
-        admin = verificar_login_admin(adm_email, adm_senha)
-        if admin:
-            st.session_state.admin_logado = True
-            st.session_state.admin_info   = admin  # guarda nome/email do admin
-            st.session_state.pagina = "admin"
-            st.rerun()
-        else:
-            st.error("Credenciais inválidas")
-
-    if cancelar:
-        st.session_state.pagina = "login"
-        st.rerun()
-
-# ─────────────────────────────────────────
 # PÁGINA: PAINEL ADMIN
 # ─────────────────────────────────────────
 elif st.session_state.pagina == "admin":
-    if not st.session_state.admin_logado:
-        st.warning("Acesso negado. Faça login como administrador.")
-        st.session_state.pagina = "admin_login"
+    u = st.session_state.usuario_logado
+    if not u or u.get("tipo_usuario") != "admin":
+        st.warning("Acesso negado.")
+        st.session_state.pagina = "login"
         st.rerun()
 
-    admin_info = st.session_state.get("admin_info", {})
     st.title("🛡️ Painel Administrativo")
-    if admin_info:
-        st.caption(f"Logado como: **{admin_info.get('nome', '')}** — {admin_info.get('email', '')}")
 
     usuarios = listar_usuarios()
 
     if not usuarios:
         st.warning("Nenhum usuário cadastrado.")
     else:
+        tipos_disponiveis = ["aluno", "professor", "admin"]
+
         opcoes = {
             f"{u['nome']} ({u['email']}) — {u['tipo_usuario']}": u
             for u in usuarios
@@ -257,17 +208,14 @@ elif st.session_state.pagina == "admin":
         with st.form("form_admin_edit"):
             nome         = st.text_input("Nome",   value=usuario["nome"])
             email        = st.text_input("E-mail", value=usuario["email"])
-            tipo_usuario = st.selectbox(
-                "Tipo",
-                ["aluno", "professor"],
-                index=0 if usuario["tipo_usuario"] == "aluno" else 1,
-            )
-            nova_senha = st.text_input(
+            idx_tipo     = tipos_disponiveis.index(usuario["tipo_usuario"]) if usuario["tipo_usuario"] in tipos_disponiveis else 0
+            tipo_usuario = st.selectbox("Tipo", tipos_disponiveis, index=idx_tipo)
+            nova_senha   = st.text_input(
                 "Nova senha (deixe em branco para não alterar)", type="password"
             )
             col1, col2 = st.columns(2)
-            salvar  = col1.form_submit_button("💾 Salvar",   use_container_width=True)
-            deletar = col2.form_submit_button("🗑️ Deletar",  use_container_width=True)
+            salvar  = col1.form_submit_button("💾 Salvar",  use_container_width=True)
+            deletar = col2.form_submit_button("🗑️ Deletar", use_container_width=True)
 
         if email and not re.match(r"[^@]+@[^@]+\.[^@]+", email):
             st.warning("E-mail inválido!")
