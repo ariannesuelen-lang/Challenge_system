@@ -1,22 +1,18 @@
 import streamlit as st
-from supabase import create_client
+
+# CONEXAO COM BACKEND
+from conexao import (
+    inserir_voto,
+    listar_votos,
+    buscar_voto_por_id,
+    atualizar_voto,
+    deletar_voto
+)
 import pandas as pd
-
-# =========================
-# CONEXÃO COM SUPABASE
-# =========================
-
-url = st.secrets["SUPABASE_URL"]
-key = st.secrets["SUPABASE_KEY"]
-
-supabase = create_client(url, key)
 
 st.set_page_config(page_title="Votação de Desafios", layout="centered")
 
-# =========================
 # CONTROLE DE ESTADO
-# =========================
-
 if 'pagina' not in st.session_state:
     st.session_state.pagina = 'lista'
 
@@ -26,59 +22,27 @@ if 'voto_id' not in st.session_state:
 if 'desafio' not in st.session_state:
     st.session_state.desafio = None
 
+# NAVEGAÇÃO
 def ir(pagina):
     st.session_state.pagina = pagina
     st.rerun()
 
-# =========================
-# FUNÇÕES CRUD
-# =========================
 
-def inserir_voto(usuario, desafio, voto):
-    return supabase.table("votos").insert({
-        "usuario": usuario,
-        "desafio": desafio,
-        "voto": voto
-    }).execute()
-
-def listar_votos():
-    return supabase.table("votos").select("*").execute()
-
-def buscar_votos_por_desafio(desafio):
-    return supabase.table("votos").select("*").eq("desafio", desafio).execute()
-
-def buscar_voto_por_id(id):
-    return supabase.table("votos").select("*").eq("id", id).execute()
-
-def atualizar_voto(id, novo_voto):
-    return supabase.table("votos").update({
-        "voto": novo_voto
-    }).eq("id", id).execute()
-
-def deletar_voto(id):
-    return supabase.table("votos").delete().eq("id", id).execute()
-
-# =========================
 # HEADER
-# =========================
-
 col1, col2 = st.columns([4, 1])
 with col2:
     st.markdown("👤 *Aluno*")
 
 st.divider()
 
-# =========================
 # LISTA DE DESAFIOS
-# =========================
-
 if st.session_state.pagina == 'lista':
 
     st.write("### Lista de Desafios")
 
     desafios = [
-        "Desafio 01 - A Realidade vs. A Teoria",
-        "Desafio 02 - Testes Experimentais"
+        "Desafio 01 - Como conectar com Supabase",
+        "Desafio 02 - Teste"
     ]
 
     for d in desafios:
@@ -95,10 +59,7 @@ if st.session_state.pagina == 'lista':
     if st.button("Ver votos cadastrados"):
         ir('visualizar')
 
-# =========================
-# VOTAÇÃO + GRÁFICO
-# =========================
-
+# VOTAÇÃO 
 elif st.session_state.pagina == 'votacao':
 
     if st.button("← Voltar"):
@@ -121,33 +82,9 @@ elif st.session_state.pagina == 'votacao':
         except Exception as e:
             st.error(e)
 
-    # =========================
-    # GRÁFICO DE VOTOS
-    # =========================
+ 
 
-    st.divider()
-    st.write("### Resultado do Desafio")
-
-    dados = buscar_votos_por_desafio(desafio)
-
-    if dados.data:
-        df = pd.DataFrame(dados.data)
-
-        # conta quantos votos existem de cada tipo
-        contagem = df["voto"].value_counts()
-
-        # garante que todas opções apareçam
-        contagem = contagem.reindex(["Bom", "Regular", "Ruim"], fill_value=0)
-
-        st.bar_chart(contagem)
-
-    else:
-        st.info("Nenhum voto ainda")
-
-# =========================
 # VISUALIZAR VOTOS
-# =========================
-
 elif st.session_state.pagina == 'visualizar':
 
     if st.button("← Voltar"):
@@ -159,10 +96,44 @@ elif st.session_state.pagina == 'visualizar':
 
     if dados.data:
         df = pd.DataFrame(dados.data)
+
+        # TABELA
         st.write(df)
 
         st.divider()
 
+        # GRÁFICO GERAL
+        st.write("### Resultado Geral")
+
+        contagem = df["voto"].value_counts()
+        contagem = contagem.reindex(["Bom", "Regular", "Ruim"], fill_value=0)
+
+        st.bar_chart(contagem)
+
+        st.divider()
+
+   
+        # GRÁFICO POR DESAFIO
+        desafios_unicos = df["desafio"].unique()
+
+        desafio_selecionado = st.selectbox(
+            "Filtrar por desafio",
+            desafios_unicos
+        )
+
+        df_filtrado = df[df["desafio"] == desafio_selecionado]
+
+        st.write(f"### Resultado - {desafio_selecionado}")
+
+        contagem_filtrada = df_filtrado["voto"].value_counts()
+        contagem_filtrada = contagem_filtrada.reindex(["Bom", "Regular", "Ruim"], fill_value=0)
+
+        st.bar_chart(contagem_filtrada)
+
+        st.divider()
+
+
+        # EDITAR / EXCLUIR
         id_voto = st.number_input("Digite o ID do voto", step=1)
 
         if st.button("Editar / Excluir"):
@@ -172,10 +143,9 @@ elif st.session_state.pagina == 'visualizar':
     else:
         st.info("Nenhum voto encontrado")
 
-# =========================
-# EDITAR / EXCLUIR
-# =========================
 
+
+# EDITAR E EXCLUIR VOTO
 elif st.session_state.pagina == 'editar':
 
     if st.button("← Voltar"):
