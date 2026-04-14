@@ -1,11 +1,8 @@
 from supabase import create_client
-import pandas as pd
 import streamlit as st
 
-# =========================
-# CONEXÃO COM SUPABASE
-# =========================
 
+# CONEXÃO COM SUPABASE
 url = st.secrets["SUPABASE_URL"]
 key = st.secrets["SUPABASE_KEY"]
 
