@@ -1,5 +1,6 @@
 from supabase import create_client
 import pandas as pd
+import streamlit as st
 
 # =========================
 # CONEXÃO COM SUPABASE
