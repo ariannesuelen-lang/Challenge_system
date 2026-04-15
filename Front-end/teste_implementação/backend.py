@@ -92,11 +92,25 @@ def verificar_professor(usuario_id: int):
 
 @app.post("/login")
 def login(dados: LoginInput):
-    res = supabase.table("usuarios").select("id, nome, email, tipo_usuario").eq("email", dados.email).eq("senha", dados.senha).execute()
+    res = supabase.table("usuarios").select("*").eq("email", dados.email).execute()
+
     if not res.data:
         raise HTTPException(status_code=401, detail="Credenciais inválidas")
-    return {"mensagem": "Login realizado com sucesso", "usuario": res.data[0]}
 
+    usuario = res.data[0]
+
+    if not verificar_senha(dados.senha, usuario["senha"]):
+        raise HTTPException(status_code=401, detail="Credenciais inválidas")
+
+    return {
+        "mensagem": "Login realizado com sucesso",
+        "usuario": {
+            "id": usuario["id"],
+            "nome": usuario["nome"],
+            "email": usuario["email"],
+            "tipo_usuario": usuario["tipo_usuario"]
+        }
+    }
 @app.post("/usuarios")
 def criar_usuario(dados: UsuarioCreate):
     existe = supabase.table("usuarios").select("id").eq("email", dados.email).execute()
