@@ -1,2 +1,11 @@
+##Frontend
+requests
 streamlit
+
+##Backend
+fastapi
+uvicorn
 supabase
+python-dotenv
+pydantic
+passlib[bcrypt]
