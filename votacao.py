@@ -1,7 +1,7 @@
 import streamlit as st    # Importa a biblioteca Streamlit
+import pandas as pd       # Importa a biblioteca pandas para manipular os dados em formato de tabela
 
 # CONEXAO COM BACKEND
-
 from conexao import (    # Importa funções do arquivo conexao.py (ele que vai mexer no banco de dados)
     inserir_voto,        # função para salvar um voto
     listar_votos,        # função para buscar todos os votos
@@ -10,13 +10,10 @@ from conexao import (    # Importa funções do arquivo conexao.py (ele que vai 
     deletar_voto         # função para excluir um voto
 )
 
-import pandas as pd      # Importa a biblioteca pandas para manipular os dados em formato de tabela
-
 st.set_page_config(page_title="Votação de Desafios", layout="centered")        # Configura o título da aba do navegador e o layout da página
 
 
 # CONTROLE DE ESTADO (essa parte é para salvar temporariamente as escolhas do usuário antes de cada mudança de tela. Sim, é importante ;-; favor não mexer)
-
 if 'pagina' not in st.session_state:     # Verifica se a variável 'pagina' já existe na sessão e se não existir, cria e define como 'lista'
     st.session_state.pagina = 'lista'
  
@@ -26,16 +23,18 @@ if 'voto_id' not in st.session_state:    # Armazena o ID do voto que será edita
 if 'desafio' not in st.session_state:    # Armazena qual desafio foi selecionado
     st.session_state.desafio = None
 
+# Simulando o ID do usuário logado
+if 'id_usuario' not in st.session_state: # Armazena o ID dinâmico do usuário (para evitar votos duplicados)
+    st.session_state.id_usuario = "user_123" # ID gerado pelo time de login
+
 
 # FUNÇÃO DE NAVEGAÇÃO
-
 def ir(pagina):                           # Função para mudar de página
     st.session_state.pagina = pagina      # atualiza a página atual
     st.rerun()                            # recarrega a tela para refletir a mudança
 
 
 # CABEÇALHO
-
 col1, col2 = st.columns([4, 1])        # Cria duas colunas na tela (uma maior e uma menor)
 
 with col2:              # Usa a segunda coluna
@@ -45,7 +44,6 @@ st.divider()            # Linha divisória
 
 
 # TELA: LISTA DE DESAFIOS
-
 if st.session_state.pagina == 'lista':        # Verifica se a página atual é 'lista'
 
     st.write("### Lista de Desafios")         # título
@@ -72,38 +70,52 @@ if st.session_state.pagina == 'lista':        # Verifica se a página atual é '
 
 
 # TELA: VOTAÇÃO
-
 elif st.session_state.pagina == 'votacao':
   
-    if st.button("← Voltar"):        # Botão para voltar
+    if st.button("← Voltar", key="btn_voltar_votacao"):  # Botão para voltar (com 'key' única para evitar erro de widget duplicado no Streamlit)
         ir('lista')
 
     desafio = st.session_state.desafio       # Pega o desafio selecionado
 
     st.write(f"### {desafio} | Votação")     # Mostra o título da votação
 
-    voto = st.radio("Escolha sua nota:", ["Bom", "Regular", "Ruim"])      # Cria opções de voto
+    # 1. Buscar todos os votos para fazer a verificação
+    dados = listar_votos()                   # Busca os dados no banco para verificação
+    ja_votou = False                         # Variável de controle começando como falsa
+    
+    if dados.data:                           # Se houver dados cadastrados no banco
+        df = pd.DataFrame(dados.data)        # Converte em tabela
+        
+        # 2. Filtrar se existe o ID do usuário para este desafio específico
+        filtro = df[(df["usuario"] == st.session_state.id_usuario) & (df["desafio"] == desafio)]
+        
+        if not filtro.empty:                 # Se o filtro não estiver vazio, o usuário já votou aqui
+            ja_votou = True                  # Muda o status de controle para verdadeiro
 
-    if st.button("Enviar Voto"):             # Botão para enviar voto
-        try:
-     
-            inserir_voto("AlunoTeste", desafio, voto)       # Chama a função para salvar o voto no banco
+    # 3. Travar a tela se já tiver votado
+    if ja_votou:
+        st.warning("⚠️ Você já registrou um voto para este desafio!")   # Esconde o form e mostra o aviso
+    
+    else:
+        # Se não votou, exibe as opções normalmente
+        voto = st.radio("Escolha sua nota:", ["Bom", "Regular", "Ruim"])      # Cria opções de voto
 
-            st.success("Voto salvo com sucesso")            # Mensagem de sucesso
+        if st.button("Enviar Voto"):             # Botão para enviar voto
+            try:
+                inserir_voto(st.session_state.id_usuario, desafio, voto)  # Salva o voto usando o ID do usuário da sessão
 
-            st.session_state.desafio = None                 # Limpa o desafio selecionado
+                st.success("Voto salvo com sucesso")             # Mensagem de sucesso
+                st.session_state.desafio = None                  # Limpa o desafio selecionado
+                ir('lista')                                      # Volta para a lista
 
-            ir('lista')                                     # Volta para a lista
-
-        except Exception as e:
-            st.error(e)                                     # Se der erro, mostra na tela
+            except Exception as e:
+                st.error(f"Erro ao salvar: {e}")                 # Se der erro, mostra na tela
 
 
 # TELA: VISUALIZAR VOTOS
-
 elif st.session_state.pagina == 'visualizar':
 
-    if st.button("← Voltar"):            # Botão para voltar
+    if st.button("← Voltar", key="btn_voltar_visualizar"):   # Botão para voltar (com 'key' única)
         ir('lista')
 
     st.write("### Votos cadastrados")    # título
@@ -167,11 +179,9 @@ elif st.session_state.pagina == 'visualizar':
 
 
 # TELA: EDITAR / EXCLUIR
-
 elif st.session_state.pagina == 'editar':
 
-
-    if st.button("← Voltar"):               # Botão de voltar
+    if st.button("← Voltar", key="btn_voltar_editar"):      # Botão de voltar (com 'key' única)
         ir('visualizar')
 
     id_voto = st.session_state.voto_id      # Recupera o ID salvo
@@ -194,12 +204,12 @@ elif st.session_state.pagina == 'editar':
 
         col1, col2 = st.columns(2)        # Cria duas colunas
 
-        with col1:                                       # Coluna de atualizar
+        with col1:                                               # Coluna de atualizar
             if st.button("Atualizar"):
                 atualizar_voto(id_voto, novo_voto)       # atualiza no banco
                 st.success("Voto atualizado")
 
-        with col2:                                       # Coluna de excluir
+        with col2:                                               # Coluna de excluir
             if st.button("Excluir"):
                 deletar_voto(id_voto)                    # remove do banco
                 st.success("Voto excluído")
