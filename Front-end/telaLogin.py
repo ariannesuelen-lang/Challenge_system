@@ -83,12 +83,9 @@ def atualizar_usuario(id_usuario: int, nome: str, email: str, tipo_usuario: str,
         v = senha_valida(nova_senha)
         if v != "ok":
             return v
-        dados["senha"] = criptografar_nova_senha(nova_senha)
+        dados["senha"] = criptografar_senha(nova_senha)
     supabase.table("usuarios").update(dados).eq("id", id_usuario).execute()
     return "ok"
-
-def criptografar_nova_senha(senha: str) -> str:
-    return hashlib.sha256(senha.encode()).hexdigest()
 
 def remover_usuario(id_usuario: int):
     supabase.table("usuarios").delete().eq("id", id_usuario).execute()
@@ -161,6 +158,7 @@ elif st.session_state.pagina == "cadastrar":
         email        = st.text_input("E-mail")
         tipo_usuario = st.selectbox("Tipo", ["aluno", "professor"])
         senha        = st.text_input("Senha", type="password")
+        confirmar    = st.text_input("Confirmar senha", type="password")  # ✅ NOVO
         st.caption("Mínimo 8 caracteres, 1 maiúscula, 1 número")
         cadastrar = st.form_submit_button("Criar conta", use_container_width=True)
 
@@ -169,6 +167,8 @@ elif st.session_state.pagina == "cadastrar":
             st.warning("Preencha todos os campos")
         elif not re.match(r"[^@]+@[^@]+\.[^@]+", email):
             st.warning("E-mail inválido")
+        elif senha != confirmar:                          # ✅ NOVO
+            st.error("As senhas não coincidem!")          # ✅ NOVO
         else:
             resultado = criar_usuario(nome, email, tipo_usuario, senha)
             if resultado == "ok":
@@ -237,10 +237,19 @@ elif st.session_state.pagina == "admin":
             else:
                 st.error(resultado)
 
+        # ✅ NOVO: confirmação antes de deletar
         if deletar:
-            remover_usuario(usuario["id"])
-            st.warning("Usuário removido.")
-            st.rerun()
+            if st.session_state.get("confirmar_delete") == usuario["id"]:
+                remover_usuario(usuario["id"])
+                st.session_state.pop("confirmar_delete", None)
+                st.warning("Usuário removido.")
+                st.rerun()
+            else:
+                st.session_state["confirmar_delete"] = usuario["id"]
+                st.rerun()
+
+        if st.session_state.get("confirmar_delete") == usuario.get("id"):
+            st.error(f"⚠️ Tem certeza que quer deletar **{usuario['nome']}**? Clique em Deletar novamente para confirmar.")
 
     st.markdown("---")
     st.subheader("📋 Todos os usuários")
