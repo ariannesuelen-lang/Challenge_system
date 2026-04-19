@@ -1,4 +1,5 @@
 # app/presentation/routes/vote_router.py
+
 from fastapi import APIRouter, HTTPException, Request, status, Depends
 from typing import cast, Annotated, Dict
 from enum import Enum
@@ -140,6 +141,7 @@ async def create_vote(
             },
         )
 
+
 # =========================
 # ENDPOINT: ESTATÍSTICAS
 # =========================
@@ -161,12 +163,15 @@ async def get_statistics(request: Request):
 
 
 # =========================
-# NOVO: SUMMARY (GOOGLE FORMS)
+# SUMMARY (INTEGRADO)
 # =========================
 class VoteSummaryResponseSchema(BaseModel):
     total: int
     count: Dict[str, int]
     percentage: Dict[str, float]
+    average: float
+    category_average: Dict[str, float]
+    difference: Dict[str, Dict[str, float]]
 
 
 @vote_router.get(
@@ -176,40 +181,18 @@ class VoteSummaryResponseSchema(BaseModel):
 @limiter.limit("30/minute")
 async def get_vote_summary(request: Request):
     """
-    Retorna contagem e porcentagem por categoria:
-    BOM, REGULAR, RUIM
+    Retorna estatisticas completas (Google Forms style),
+    reutilizando o Domain Service via UseCase.
     """
 
-    use_case = _get_list_use_case(request)
+    use_case = _get_stats_use_case(request)
     result = use_case.execute()
 
-    votes = result.votes
-    total = len(votes)
-
-    count = {
-        "BOM": 0,
-        "REGULAR": 0,
-        "RUIM": 0,
-    }
-
-    for v in votes:
-        if v.score == 10.0:
-            count["BOM"] += 1
-        elif v.score == 5.0:
-            count["REGULAR"] += 1
-        elif v.score == 1.0:
-            count["RUIM"] += 1
-
-    if total == 0:
-        percentage = {k: 0.0 for k in count}
-    else:
-        percentage = {
-            k: round((count[k] / total) * 100, 2)
-            for k in count
-        }
-
     return VoteSummaryResponseSchema(
-        total=total,
-        count=count,
-        percentage=percentage,
+        total=result.total_votes,
+        count=result.count,
+        percentage=result.percentage,
+        average=result.average_score,
+        category_average=result.category_average,
+        difference=result.difference,
     )
