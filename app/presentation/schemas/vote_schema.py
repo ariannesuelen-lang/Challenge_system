@@ -1,16 +1,22 @@
 # app/presentation/schemas/vote_schema.py
+
 from pydantic import BaseModel, Field
-from typing import Optional
+from typing import Optional, Dict
 from enum import Enum
 
 
-# NOVO: Enum para opções de voto
+# =========================
+# ENUM
+# =========================
 class VoteOption(str, Enum):
     BOM = "BOM"
     REGULAR = "REGULAR"
     RUIM = "RUIM"
 
 
+# =========================
+# REQUEST
+# =========================
 class VoteRequestSchema(BaseModel):
     """Schema de entrada para registro de voto."""
 
@@ -25,6 +31,9 @@ class VoteRequestSchema(BaseModel):
         }
 
 
+# =========================
+# RESPONSE
+# =========================
 class VoteResponseSchema(BaseModel):
     """Schema de resposta com dados do voto registrado."""
 
@@ -44,15 +53,28 @@ class VoteResponseSchema(BaseModel):
         }
 
 
+# =========================
+# STATS (EVOLUÍDO E COMPATÍVEL)
+# =========================
 class VoteStatsResponseSchema(BaseModel):
-    """Schema de resposta com estatisticas."""
+    """Schema de resposta com estatisticas completas."""
 
+    # CAMPOS ORIGINAIS (mantidos)
     total_votes: int
     average_score: float
     min_score: float
     max_score: float
 
+    # NOVOS CAMPOS (integração)
+    count: Optional[Dict[str, int]] = None
+    percentage: Optional[Dict[str, float]] = None
+    category_average: Optional[Dict[str, float]] = None
+    difference: Optional[Dict[str, Dict[str, float]]] = None
 
+
+# =========================
+# LIST
+# =========================
 class VoteListResponseSchema(BaseModel):
     """Schema de resposta com lista de votos."""
 
@@ -60,6 +82,9 @@ class VoteListResponseSchema(BaseModel):
     total: int
 
 
+# =========================
+# ERROR
+# =========================
 class ErrorResponseSchema(BaseModel):
     """Schema de resposta para erros."""
 
@@ -68,5 +93,5 @@ class ErrorResponseSchema(BaseModel):
     status_code: int
 
 
-# Forca a reconstrucao dos schemas para resolver forward references
+# Resolve forward refs
 VoteListResponseSchema.model_rebuild()
