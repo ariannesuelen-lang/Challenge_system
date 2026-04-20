@@ -9,5 +9,7 @@ Situação atual: Tela já implementada em Streamlit. Necessário testes e algun
 
 Para visualização no streamlit: https://challengesystem-2yk77wavtez9wdzaskpaut.streamlit.app/
 
+Acesso ao Notion: https://www.notion.so/invite/03cf63e02886c912d8564c84ba2dc3bb0aa55498
+
 Observação: Em cada commit, comentar o que foi feito e colocar o nome dos participantes (# e @)
 
