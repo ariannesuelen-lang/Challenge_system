@@ -1,0 +1,97 @@
+import streamlit as st
+import requests
+import re
+
+BASE_URL = "http://localhost:8000"
+
+REGEX_EMAIL = re.compile(r"[^@]+@[^@]+\.[^@]+")
+
+# =========================
+# REQUEST
+# =========================
+def post(endpoint: str, body: dict):
+    try:
+        return requests.post(f"{BASE_URL}{endpoint}", json=body)
+    except requests.exceptions.ConnectionError:
+        st.error("🚫 Servidor offline. Verifique o backend.")
+        return None
+
+
+def detail(res):
+    try:
+        return res.json().get("detail", "Erro desconhecido.")
+    except:
+        return "Erro desconhecido."
+
+
+# =========================
+# VALIDAÇÃO
+# =========================
+def email_valido(email: str):
+    return bool(REGEX_EMAIL.match(email))
+
+
+# =========================
+# TELA DE LOGIN
+# =========================
+def tela_login():
+    st.set_page_config(page_title="Login", page_icon="🎓")
+
+    # centralização
+    col1, col2, col3 = st.columns([1, 2, 1])
+
+    with col2:
+        st.markdown("## 🎓 Sistema Acadêmico")
+        st.caption("Acesse sua conta para continuar")
+
+        st.markdown("---")
+
+        with st.form("form_login", clear_on_submit=False):
+            email = st.text_input("📧 Email", placeholder="seuemail@email.com")
+            senha = st.text_input("🔒 Senha", type="password")
+
+            mostrar = st.checkbox("Mostrar senha")
+
+            if mostrar:
+                st.text_input("Senha visível", value=senha)
+
+            entrar = st.form_submit_button("🚀 Entrar", use_container_width=True)
+
+        # =========================
+        # AÇÃO
+        # =========================
+        if entrar:
+            if not email or not senha:
+                st.warning("Preencha todos os campos.")
+                return
+
+            if not email_valido(email):
+                st.warning("Digite um email válido.")
+                return
+
+            with st.spinner("Entrando..."):
+                res = post("/login", {
+                    "email": email,
+                    "senha": senha
+                })
+
+            if res is None:
+                return
+
+            if res.status_code == 200:
+                dados = res.json()
+
+                st.session_state.logado = True
+                st.session_state.usuario = dados["usuario"]
+
+                st.success(f"Bem-vindo, {dados['usuario']['nome']}!")
+                st.balloons()
+                st.rerun()
+
+            elif res.status_code == 401:
+                st.error("Email ou senha incorretos.")
+            else:
+                st.error(detail(res))
+
+        st.markdown("---")
+        st.caption("© 2026 • Sistema Acadêmico")
