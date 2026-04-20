@@ -11,9 +11,9 @@ def login(dados: LoginInput):
     res = supabase.table("usuarios").select("*").eq("email", dados.email).execute()
     if not res.data:
         raise HTTPException(status_code=401, detail="Credenciais inválidas")
-    usuario = res.daat[0]
+    usuario = res.data[0]
 
-    if not verificar_senha(dados.senha, ususario["senha"]):
+    if not verificar_senha(dados.senha, usuario["senha"]):
         raise HTTPException(status_code=401, detail="Credenciais inválidas")
 
     usuario.pop("senha", None)
