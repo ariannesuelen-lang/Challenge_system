@@ -181,7 +181,7 @@ elif st.session_state.pagina == 'visualizar':
         st.divider()
 
         id_voto = st.number_input("Digite o ID do voto", step=1)
-        if id_voto <= 0:
+        if id_voto is None or id_voto <= 0:
            st.warning("Digite um ID válido.")
            st.stop()
 
