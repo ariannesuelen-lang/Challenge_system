@@ -17,10 +17,10 @@ def home():
 
 @app.get("/usuarios")
 def buscar_usuarios():
-    response = supabase.table("sua_tabela").select("*").execute()
+    response = supabase.table("usuarios").select("*").execute()
     return response.data
 
 @app.post("/cadastrar")
 def cadastrar(dados: dict):
-    response = supabase.table("sua_tabela").insert(dados).execute()
+    response = supabase.table("usuarios").insert(dados).execute()
     return {"mensagem": "Salvo com sucesso!", "dados": response.data}
