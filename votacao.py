@@ -87,7 +87,7 @@ if st.session_state.pagina == 'lista':
             st.write(f"### {d}")
             st.caption("em andamento")
 
-            if st.button(f"Acessar {d}"):
+            if st.button(f"Acessar {d}", key=d):
                 st.session_state.desafio = d
                 ir('votacao')
 
