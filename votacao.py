@@ -115,7 +115,7 @@ elif st.session_state.pagina == 'votacao':
 if 'enviando' not in st.session_state:
     st.session_state.enviando = False
 
-if st.button("Enviar Voto") and not st.session_state.enviando:
+if st.button("Enviar Voto", disabled=st.session_state.enviando):
 
     if voto is None:
         st.warning("Selecione uma opção antes de enviar.")
