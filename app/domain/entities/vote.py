@@ -4,6 +4,7 @@ from __future__ import annotations
 import uuid
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
+from typing import Optional
 
 from app.domain.value_objects.vote_score import VoteScore
 
@@ -16,6 +17,7 @@ class Vote:
     """
 
     score: VoteScore = field(repr=False)
+    student_name: Optional[str] = field(default=None, repr=False)
     vote_id: uuid.UUID = field(default_factory=uuid.uuid4)
     created_at: datetime = field(
         default_factory=lambda: datetime.now(timezone.utc),

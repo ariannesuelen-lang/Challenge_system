@@ -10,6 +10,7 @@ class Settings:
     max_vote_score: float = 10.0
     rate_limit_default: str = "10/minute"
     debug: bool = False
+    teacher_secret: str = "change-me"
 
 
 settings = Settings()

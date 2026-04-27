@@ -20,12 +20,38 @@ class RegisterVoteUseCase:
         self._voting_service = voting_service
 
     def execute(self, input_dto: RegisterVoteInputDTO) -> VoteOutputDTO:
-        vote = self._voting_service.register_vote(input_dto.score)
+        vote = self._voting_service.register_vote(
+            input_dto.score, input_dto.student_name
+        )
         return VoteOutputDTO(
             vote_id=str(vote.vote_id),
             score=vote.score_value,
             created_at=vote.created_at.isoformat(),
         )
+
+
+class GetAllVotesForTeacherUseCase:
+    """Use Case que retorna todos os votos incluindo o nome do aluno.
+    Deve ser protegido e utilizado somente pelo professor.
+    """
+
+    def __init__(self, voting_service: VotingService) -> None:
+        self._voting_service = voting_service
+
+    def execute(self):
+        votes = self._voting_service.get_all_votes()
+        vote_dtos = [
+            VoteOutputDTO(
+                vote_id=str(v.vote_id),
+                score=v.score_value,
+                created_at=v.created_at.isoformat(),
+            )
+            for v in votes
+        ]
+
+        # Additionally return raw objects for teacher view (including student_name)
+        # The presentation layer will access student_name directly from entities.
+        return votes
 
 
 class GetAllVotesUseCase:

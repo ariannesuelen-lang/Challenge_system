@@ -17,6 +17,7 @@ from app.application.use_cases.register_vote_use_case import (
     RegisterVoteUseCase,
     GetAllVotesUseCase,
     GetVoteStatisticsUseCase,
+    GetAllVotesForTeacherUseCase,
 )
 from app.presentation.routes.vote_router import vote_router
 from app.infrastructure.rate_limiter.rate_limit_config import limiter
@@ -55,11 +56,13 @@ def create_app() -> FastAPI:
     register_use_case = RegisterVoteUseCase(voting_service=voting_service)
     list_use_case = GetAllVotesUseCase(voting_service=voting_service)
     stats_use_case = GetVoteStatisticsUseCase(voting_service=voting_service)
+    teacher_use_case = GetAllVotesForTeacherUseCase(voting_service=voting_service)
 
     # Inject dependencies into app state
     app.state.register_vote_use_case = register_use_case
     app.state.get_all_votes_use_case = list_use_case
     app.state.get_vote_statistics_use_case = stats_use_case
+    app.state.get_all_votes_for_teacher_use_case = teacher_use_case
 
     # Routes
     app.include_router(vote_router)

@@ -17,12 +17,12 @@ class VotingService:
     def __init__(self, vote_repository: VoteRepository) -> None:
         self._repository = vote_repository
 
-    def register_vote(self, score_value: float) -> Vote:
+    def register_vote(self, score_value: float, student_name: str | None = None) -> Vote:
         """
         Cria e persiste um novo voto.
         """
         score = VoteScore.from_float(score_value)
-        vote = Vote(score=score)
+        vote = Vote(score=score, student_name=student_name)
         return self._repository.save(vote)
 
     def get_all_votes(self) -> List[Vote]:

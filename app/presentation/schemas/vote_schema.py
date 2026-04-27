@@ -32,6 +32,20 @@ class VoteRequestSchema(BaseModel):
 
 
 # =========================
+# STUDENT REQUEST (nome + nota)
+# =========================
+class StudentVoteRequestSchema(BaseModel):
+    score: VoteOption = Field(
+        ...,
+        description="Escolha entre: BOM, REGULAR ou RUIM.",
+    )
+    student_name: str = Field(..., description="Nome do aluno")
+
+    class Config:
+        json_schema_extra = {"example": {"score": "BOM", "student_name": "Joao"}}
+
+
+# =========================
 # RESPONSE
 # =========================
 class VoteResponseSchema(BaseModel):
@@ -79,6 +93,21 @@ class VoteListResponseSchema(BaseModel):
     """Schema de resposta com lista de votos."""
 
     votes: list['VoteResponseSchema']
+    total: int
+
+
+# =========================
+# TEACHER RESPONSES (inclui nome do aluno)
+# =========================
+class TeacherVoteResponseSchema(BaseModel):
+    vote_id: str
+    score: float
+    created_at: str
+    student_name: Optional[str]
+
+
+class TeacherVoteListResponseSchema(BaseModel):
+    votes: list[TeacherVoteResponseSchema]
     total: int
 
 
