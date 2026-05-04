@@ -23,6 +23,7 @@ _defaults = {
     "logado": False,
     "usuario": None,
     "admin_logado": False,
+    "adm_confirmar_delete": None,   # guarda (tipo, id) para confirmação
 }
 for chave, valor in _defaults.items():
     if chave not in st.session_state:
@@ -45,7 +46,7 @@ def _request(method: str, endpoint: str, body=None, params=None):
         return None
 
 
-def get(endpoint: str, params=None) -> list | dict:
+def get(endpoint: str, params=None):
     res = _request("get", endpoint, params=params)
     if res is not None and res.status_code == 200:
         return res.json()
@@ -65,7 +66,6 @@ def delete(endpoint: str, params=None):
 
 
 def detail(res) -> str:
-    """Extrai a mensagem de detalhe de uma resposta de erro."""
     try:
         return res.json().get("detail", "Erro desconhecido.")
     except Exception:
@@ -82,7 +82,7 @@ def is_professor() -> bool:
     )
 
 
-def user_id() -> int | None:
+def user_id():
     if st.session_state.usuario:
         return st.session_state.usuario["id"]
     return None
@@ -161,12 +161,7 @@ def _form_cadastro():
     validar_email_field(email)
     validar_senha_field(senha)
 
-    campos_validos = (
-        nome.strip()
-        and email_valido(email)
-        and senha_valida(senha)
-    )
-
+    campos_validos = nome.strip() and email_valido(email) and senha_valida(senha)
     aviso = st.empty()
 
     if st.button("Criar conta", disabled=not campos_validos):
@@ -487,41 +482,192 @@ def tela_login_admin():
                 st.error("Login ou senha incorretos.")
 
 # =========================
-# ADMIN — PÁGINAS
+# ADMIN — HELPERS VISUAIS
+# =========================
+
+def _badge_tipo(tipo: str) -> str:
+    cores = {"professor": "🟣", "aluno": "🔵"}
+    return f"{cores.get(tipo, '⚪')} {tipo.capitalize()}"
+
+
+def _confirmar_delete(chave: str, label: str, callback):
+    """
+    Exibe botão de deletar com confirmação em dois cliques.
+    chave  : identificador único para o estado
+    label  : texto exibido no botão de confirmação
+    callback: função chamada após confirmação → deve retornar (sucesso: bool)
+    """
+    if st.session_state.adm_confirmar_delete == chave:
+        st.warning(f"⚠️ Confirmar exclusão de **{label}**?")
+        col_sim, col_nao = st.columns(2)
+        with col_sim:
+            if st.button("✅ Confirmar", key=f"sim_{chave}"):
+                ok = callback()
+                st.session_state.adm_confirmar_delete = None
+                if ok:
+                    st.success("Removido com sucesso.")
+                    st.rerun()
+                else:
+                    st.error("Falha ao remover.")
+        with col_nao:
+            if st.button("❌ Cancelar", key=f"nao_{chave}"):
+                st.session_state.adm_confirmar_delete = None
+                st.rerun()
+    else:
+        if st.button("🗑️", key=f"del_{chave}", help=f"Excluir {label}"):
+            st.session_state.adm_confirmar_delete = chave
+            st.rerun()
+
+# =========================
+# ADMIN — DASHBOARD
+# =========================
+
+def adm_pagina_dashboard():
+    st.subheader("📊 Visão Geral")
+
+    usuarios  = get("/admin/usuarios") or []
+    desafios  = get("/desafios")       or []
+    cursos    = get("/cursos")         or []
+    disciplinas = get("/disciplinas")  or []
+
+    # Contagem de respostas totais
+    total_respostas = sum(
+        len(get(f"/desafios/{d['id']}/respostas") or []) for d in desafios
+    )
+
+    alunos     = [u for u in usuarios if u.get("tipo_usuario") == "aluno"]
+    professores = [u for u in usuarios if u.get("tipo_usuario") == "professor"]
+
+    # ── Métricas principais
+    c1, c2, c3, c4, c5 = st.columns(5)
+    c1.metric("👥 Usuários",     len(usuarios))
+    c2.metric("🎓 Alunos",       len(alunos))
+    c3.metric("👨‍🏫 Professores",  len(professores))
+    c4.metric("📋 Desafios",     len(desafios))
+    c5.metric("💬 Respostas",    total_respostas)
+
+    st.markdown("---")
+
+    c6, c7 = st.columns(2)
+    c6.metric("🏫 Cursos",       len(cursos))
+    c7.metric("📗 Disciplinas",  len(disciplinas))
+
+    st.markdown("---")
+
+    # ── Últimos usuários cadastrados
+    st.markdown("#### 🕐 Últimos usuários cadastrados")
+    if usuarios:
+        ultimos = usuarios[-5:][::-1]
+        for u in ultimos:
+            col_nome, col_email, col_tipo = st.columns([3, 4, 2])
+            with col_nome:
+                st.write(f"**{u['nome']}**")
+            with col_email:
+                st.caption(u["email"])
+            with col_tipo:
+                st.caption(_badge_tipo(u.get("tipo_usuario", "")))
+    else:
+        st.info("Nenhum usuário cadastrado ainda.")
+
+    st.markdown("---")
+
+    # ── Últimos desafios criados
+    st.markdown("#### 📌 Últimos desafios criados")
+    if desafios:
+        ultimos_d = desafios[-5:][::-1]
+        for d in ultimos_d:
+            col_titulo, col_criador, col_disc = st.columns([4, 3, 3])
+            with col_titulo:
+                st.write(f"**{d['titulo']}**")
+            with col_criador:
+                st.caption(f"por {d['criador_nome']}")
+            with col_disc:
+                st.caption(d.get("disciplina_nome") or "Sem disciplina")
+    else:
+        st.info("Nenhum desafio criado ainda.")
+
+# =========================
+# ADMIN — USUÁRIOS
 # =========================
 
 def adm_pagina_usuarios():
-    st.subheader("👥 Usuários cadastrados")
-    usuarios = get("/admin/usuarios")
+    st.subheader("👥 Gerenciar Usuários")
+
+    usuarios = get("/admin/usuarios") or []
     if not usuarios:
         st.info("Nenhum usuário encontrado.")
         return
 
-    for u in usuarios:
-        col_info, col_tipo, col_acao = st.columns([3, 2, 1])
-        with col_info:
-            st.write(f"**{u['nome']}** — {u['email']}")
-        with col_tipo:
-            st.caption(u.get("tipo_usuario", "").capitalize())
-        with col_acao:
-            if st.button("🗑️", key=f"adm_del_user_{u['id']}"):
-                res = delete(f"/admin/usuarios/{u['id']}")
-                if res and res.status_code == 200:
-                    st.success("Usuário removido.")
-                    st.rerun()
-                elif res:
-                    st.error(detail(res))
+    # ── Filtros
+    col_busca, col_filtro = st.columns([3, 2])
+    with col_busca:
+        busca = st.text_input("🔍 Buscar por nome ou e-mail", key="busca_user")
+    with col_filtro:
+        filtro_tipo = st.selectbox("Filtrar por tipo", ["Todos", "aluno", "professor"], key="filtro_tipo_user")
 
+    filtrados = [
+        u for u in usuarios
+        if (busca.lower() in u["nome"].lower() or busca.lower() in u["email"].lower())
+        and (filtro_tipo == "Todos" or u.get("tipo_usuario") == filtro_tipo)
+    ]
+
+    st.caption(f"{len(filtrados)} usuário(s) encontrado(s)")
+    st.markdown("---")
+
+    if not filtrados:
+        st.warning("Nenhum usuário corresponde aos filtros.")
+        return
+
+    # ── Cabeçalho da tabela
+    cab1, cab2, cab3, cab4 = st.columns([3, 4, 2, 1])
+    cab1.markdown("**Nome**")
+    cab2.markdown("**E-mail**")
+    cab3.markdown("**Tipo**")
+    cab4.markdown("**Ação**")
+    st.markdown("---")
+
+    for u in filtrados:
+        col_nome, col_email, col_tipo, col_acao = st.columns([3, 4, 2, 1])
+        with col_nome:
+            st.write(u["nome"])
+        with col_email:
+            st.caption(u["email"])
+        with col_tipo:
+            st.caption(_badge_tipo(u.get("tipo_usuario", "")))
+        with col_acao:
+            _confirmar_delete(
+                chave=f"user_{u['id']}",
+                label=u["nome"],
+                callback=lambda uid=u["id"]: (
+                    (r := delete(f"/admin/usuarios/{uid}")) and r.status_code == 200
+                ),
+            )
+
+
+# =========================
+# ADMIN — EDITAR USUÁRIO
+# =========================
 
 def adm_pagina_editar_usuario():
     st.subheader("✏️ Editar Usuário")
 
-    usuarios = get("/admin/usuarios")
+    usuarios = get("/admin/usuarios") or []
     if not usuarios:
         st.info("Nenhum usuário encontrado.")
         return
 
-    opcoes = {f"{u['nome']} ({u['email']})": u for u in usuarios}
+    # Busca rápida para facilitar a seleção
+    busca = st.text_input("🔍 Buscar usuário", key="busca_editar_user")
+    filtrados = [
+        u for u in usuarios
+        if busca.lower() in u["nome"].lower() or busca.lower() in u["email"].lower()
+    ] if busca else usuarios
+
+    opcoes = {f"{u['nome']} ({u['email']})": u for u in filtrados}
+    if not opcoes:
+        st.warning("Nenhum usuário encontrado com esse filtro.")
+        return
+
     sel = st.selectbox("Selecione o usuário", list(opcoes.keys()))
     dados = get(f"/usuarios/{opcoes[sel]['id']}")
     if not dados:
@@ -530,186 +676,314 @@ def adm_pagina_editar_usuario():
 
     st.markdown("---")
 
-    with st.form("form_editar_usuario"):
-        nome = st.text_input("Nome completo", value=dados["nome"])
-        email = st.text_input("Email", value=dados["email"])
-        tipo = st.selectbox(
-            "Tipo de usuário",
-            ["aluno", "professor"],
-            index=0 if dados["tipo_usuario"] == "aluno" else 1,
-        )
-        senha = st.text_input("Nova senha (opcional)", type="password")
-        submit = st.form_submit_button("💾 Salvar alterações")
+    col_form, col_info = st.columns([2, 1])
 
-    validar_email_field(email)
-    validar_senha_field(senha)
+    with col_form:
+        with st.form("form_editar_usuario"):
+            nome  = st.text_input("Nome completo", value=dados["nome"])
+            email = st.text_input("Email",          value=dados["email"])
+            tipo  = st.selectbox(
+                "Tipo de usuário",
+                ["aluno", "professor"],
+                index=0 if dados["tipo_usuario"] == "aluno" else 1,
+            )
+            senha  = st.text_input("Nova senha (opcional)", type="password")
+            submit = st.form_submit_button("💾 Salvar alterações", use_container_width=True)
+
+        validar_email_field(email)
+        validar_senha_field(senha)
+
+    with col_info:
+        st.markdown("#### 📋 Dados atuais")
+        st.write(f"**ID:** {dados['id']}")
+        st.write(f"**Nome:** {dados['nome']}")
+        st.write(f"**E-mail:** {dados['email']}")
+        st.write(f"**Tipo:** {_badge_tipo(dados['tipo_usuario'])}")
 
     if submit:
         payload = {"nome": nome, "email": email, "tipo_usuario": tipo}
         if senha:
             payload["senha"] = senha
-
         res = put(f"/usuarios/{dados['id']}", payload)
         if res and res.status_code == 200:
-            st.success("Usuário atualizado com sucesso!")
+            st.success("✅ Usuário atualizado com sucesso!")
             st.rerun()
         elif res and res.status_code == 409:
             st.error("E-mail já está em uso.")
         elif res:
             st.error(detail(res))
 
+# =========================
+# ADMIN — DESAFIOS
+# =========================
 
 def adm_pagina_desafios():
-    st.subheader("📋 Todos os Desafios")
-    desafios = get("/desafios")
+    st.subheader("📋 Gerenciar Desafios")
+
+    desafios = get("/desafios") or []
     if not desafios:
         st.info("Nenhum desafio cadastrado.")
         return
 
-    for d in desafios:
-        col_info, col_acao = st.columns([5, 1])
-        with col_info:
-            st.write(f"**{d['titulo']}** — criado por {d['criador_nome']}")
+    # ── Filtros
+    col_busca, col_disc = st.columns([3, 2])
+    with col_busca:
+        busca = st.text_input("🔍 Buscar por título ou criador", key="busca_desafio")
+    with col_disc:
+        disciplinas = get("/disciplinas") or []
+        opts_disc = {"Todas": None, **{d["nome"]: d["id"] for d in disciplinas}}
+        disc_sel = st.selectbox("Filtrar por disciplina", list(opts_disc.keys()), key="filtro_disc_adm")
+
+    filtrados = [
+        d for d in desafios
+        if (busca.lower() in d["titulo"].lower() or busca.lower() in d["criador_nome"].lower())
+        and (opts_disc[disc_sel] is None or d.get("disciplina_id") == opts_disc[disc_sel])
+    ]
+
+    st.caption(f"{len(filtrados)} desafio(s) encontrado(s)")
+    st.markdown("---")
+
+    if not filtrados:
+        st.warning("Nenhum desafio corresponde aos filtros.")
+        return
+
+    # ── Cabeçalho
+    cab1, cab2, cab3, cab4 = st.columns([4, 3, 3, 1])
+    cab1.markdown("**Título**")
+    cab2.markdown("**Criador**")
+    cab3.markdown("**Disciplina**")
+    cab4.markdown("**Ação**")
+    st.markdown("---")
+
+    for d in filtrados:
+        col_titulo, col_criador, col_disc2, col_acao = st.columns([4, 3, 3, 1])
+        with col_titulo:
+            st.write(f"**{d['titulo']}**")
+        with col_criador:
+            st.caption(d["criador_nome"])
+        with col_disc2:
+            st.caption(d.get("disciplina_nome") or "—")
         with col_acao:
-            if st.button("🗑️", key=f"adm_del_des_{d['id']}"):
-                res = delete(f"/admin/desafios/{d['id']}")
+            _confirmar_delete(
+                chave=f"desafio_{d['id']}",
+                label=d["titulo"],
+                callback=lambda did=d["id"]: (
+                    (r := delete(f"/admin/desafios/{did}")) and r.status_code == 200
+                ),
+            )
+
+# =========================
+# ADMIN — CURSOS E DISCIPLINAS
+# =========================
+
+def _adm_aba_cursos():
+    cursos = get("/cursos") or []
+
+    # Formulário de criação no topo
+    with st.expander("➕ Criar novo curso", expanded=False):
+        nome_curso = st.text_input("Nome do novo curso", key="adm_curso_nome")
+        if st.button("Criar Curso", key="adm_criar_curso", disabled=not nome_curso.strip()):
+            res = post("/cursos", {"nome": nome_curso})
+            if res and res.status_code == 200:
+                st.success("Curso criado!")
+                st.rerun()
+            elif res:
+                st.error(detail(res))
+
+    st.markdown("---")
+
+    if not cursos:
+        st.info("Nenhum curso cadastrado.")
+        return
+
+    st.caption(f"{len(cursos)} curso(s) cadastrado(s)")
+
+    cab1, cab2, cab3 = st.columns([1, 5, 1])
+    cab1.markdown("**ID**")
+    cab2.markdown("**Nome**")
+    cab3.markdown("**Ação**")
+    st.markdown("---")
+
+    for c in cursos:
+        col_id, col_nome, col_acao = st.columns([1, 5, 1])
+        with col_id:
+            st.caption(str(c["id"]))
+        with col_nome:
+            st.write(f"📘 {c['nome']}")
+        with col_acao:
+            _confirmar_delete(
+                chave=f"curso_{c['id']}",
+                label=c["nome"],
+                callback=lambda cid=c["id"]: (
+                    (r := delete(f"/admin/cursos/{cid}")) and r.status_code == 200
+                ),
+            )
+
+
+def _adm_aba_disciplinas():
+    cursos = get("/cursos") or []
+    disciplinas = get("/disciplinas") or []
+
+    # Formulário de criação no topo
+    with st.expander("➕ Criar nova disciplina", expanded=False):
+        if not cursos:
+            st.warning("Cadastre um curso antes de criar disciplinas.")
+        else:
+            opts_curso = {c["nome"]: c["id"] for c in cursos}
+            nome_disc  = st.text_input("Nome da nova disciplina", key="adm_disc_nome")
+            curso_sel  = st.selectbox("Curso", list(opts_curso.keys()), key="adm_disc_curso")
+            if st.button("Criar Disciplina", key="adm_criar_disc", disabled=not nome_disc.strip()):
+                res = post("/disciplinas", {"nome": nome_disc, "curso_id": opts_curso[curso_sel]})
                 if res and res.status_code == 200:
-                    st.success("Desafio removido.")
+                    st.success("Disciplina criada!")
                     st.rerun()
                 elif res:
                     st.error(detail(res))
 
-
-def _adm_aba_cursos():
-    cursos = get("/cursos")
-    if cursos:
-        for c in cursos:
-            col_info, col_acao = st.columns([5, 1])
-            with col_info:
-                st.write(f"📘 **{c['nome']}** (ID: {c['id']})")
-            with col_acao:
-                if st.button("🗑️", key=f"adm_del_curso_{c['id']}"):
-                    res = delete(f"/admin/cursos/{c['id']}")
-                    if res and res.status_code == 200:
-                        st.success("Curso removido.")
-                        st.rerun()
-                    elif res:
-                        st.error(detail(res))
-    else:
-        st.info("Nenhum curso cadastrado.")
-
     st.markdown("---")
-    nome_curso = st.text_input("Nome do novo curso", key="adm_curso_nome")
-    if st.button("Criar Curso", key="adm_criar_curso"):
-        res = post("/cursos", {"nome": nome_curso})
-        if res and res.status_code == 200:
-            st.success("Curso criado!")
-            st.rerun()
-        elif res:
-            st.error(detail(res))
 
-
-def _adm_aba_disciplinas():
-    disciplinas = get("/disciplinas")
-    if disciplinas:
-        for d in disciplinas:
-            col_info, col_acao = st.columns([5, 1])
-            with col_info:
-                st.write(f"📗 **{d['nome']}** — {d['curso_nome']}")
-            with col_acao:
-                if st.button("🗑️", key=f"adm_del_disc_{d['id']}"):
-                    res = delete(f"/admin/disciplinas/{d['id']}")
-                    if res and res.status_code == 200:
-                        st.success("Disciplina removida.")
-                        st.rerun()
-                    elif res:
-                        st.error(detail(res))
-    else:
+    if not disciplinas:
         st.info("Nenhuma disciplina cadastrada.")
+        return
 
+    # Filtro por curso
+    opts_filtro = {"Todos os cursos": None, **{c["nome"]: c["id"] for c in cursos}}
+    filtro_curso = st.selectbox("Filtrar por curso", list(opts_filtro.keys()), key="filtro_curso_disc")
+    filtradas = [
+        d for d in disciplinas
+        if opts_filtro[filtro_curso] is None or d.get("curso_id") == opts_filtro[filtro_curso]
+    ]
+
+    st.caption(f"{len(filtradas)} disciplina(s) encontrada(s)")
     st.markdown("---")
-    cursos = get("/cursos")
-    opts_curso = {c["nome"]: c["id"] for c in cursos}
-    nome_disc = st.text_input("Nome da nova disciplina", key="adm_disc_nome")
-    if opts_curso:
-        curso_sel = st.selectbox("Curso", list(opts_curso.keys()), key="adm_disc_curso")
-        if st.button("Criar Disciplina", key="adm_criar_disc"):
-            res = post("/disciplinas", {"nome": nome_disc, "curso_id": opts_curso[curso_sel]})
-            if res and res.status_code == 200:
-                st.success("Disciplina criada!")
-                st.rerun()
-            elif res:
-                st.error(detail(res))
-    else:
-        st.warning("Cadastre um curso antes de criar disciplinas.")
+
+    cab1, cab2, cab3, cab4 = st.columns([1, 4, 4, 1])
+    cab1.markdown("**ID**")
+    cab2.markdown("**Nome**")
+    cab3.markdown("**Curso**")
+    cab4.markdown("**Ação**")
+    st.markdown("---")
+
+    for d in filtradas:
+        col_id, col_nome, col_curso, col_acao = st.columns([1, 4, 4, 1])
+        with col_id:
+            st.caption(str(d["id"]))
+        with col_nome:
+            st.write(f"📗 {d['nome']}")
+        with col_curso:
+            st.caption(d.get("curso_nome", "—"))
+        with col_acao:
+            _confirmar_delete(
+                chave=f"disc_{d['id']}",
+                label=d["nome"],
+                callback=lambda did=d["id"]: (
+                    (r := delete(f"/admin/disciplinas/{did}")) and r.status_code == 200
+                ),
+            )
 
 
 def adm_pagina_cursos():
     st.subheader("🏫 Cursos e Disciplinas")
-    aba_cursos, aba_disciplinas = st.tabs(["Cursos", "Disciplinas"])
-
+    aba_cursos, aba_disciplinas = st.tabs(["📘 Cursos", "📗 Disciplinas"])
     with aba_cursos:
         _adm_aba_cursos()
-
     with aba_disciplinas:
         _adm_aba_disciplinas()
 
+# =========================
+# ADMIN — RESPOSTAS
+# =========================
 
 def adm_pagina_respostas():
-    st.subheader("💬 Todas as Respostas")
-    desafios = get("/desafios")
+    st.subheader("💬 Gerenciar Respostas")
+
+    desafios = get("/desafios") or []
     if not desafios:
         st.info("Nenhum desafio encontrado.")
         return
 
-    for d in desafios:
-        respostas = get(f"/desafios/{d['id']}/respostas")
+    # Filtro por desafio
+    opts = {"Todos os desafios": None, **{d["titulo"]: d["id"] for d in desafios}}
+    filtro = st.selectbox("Filtrar por desafio", list(opts.keys()), key="filtro_resp_adm")
+
+    desafios_filtrados = (
+        [d for d in desafios if d["id"] == opts[filtro]]
+        if opts[filtro]
+        else desafios
+    )
+
+    total_exibido = 0
+
+    for d in desafios_filtrados:
+        respostas = get(f"/desafios/{d['id']}/respostas") or []
         if not respostas:
             continue
 
-        st.markdown(f"**📌 {d['titulo']}**")
-        for r in respostas:
-            col_info, col_acao = st.columns([5, 1])
-            with col_info:
-                st.write(f"👤 {r['usuario_nome']}: {r['conteudo']}")
-            with col_acao:
-                if st.button("🗑️", key=f"adm_del_resp_{r['id']}"):
-                    res = delete(f"/admin/respostas/{r['id']}")
-                    if res and res.status_code == 200:
-                        st.success("Resposta removida.")
-                        st.rerun()
-                    elif res:
-                        st.error(detail(res))
-        st.markdown("---")
+        total_exibido += len(respostas)
+
+        with st.expander(f"📌 {d['titulo']} — {len(respostas)} resposta(s)", expanded=(opts[filtro] is not None)):
+            cab1, cab2, cab3, cab4 = st.columns([2, 5, 1, 1])
+            cab1.markdown("**Autor**")
+            cab2.markdown("**Resposta**")
+            cab3.markdown("**Votos**")
+            cab4.markdown("**Ação**")
+            st.markdown("---")
+
+            for r in respostas:
+                c1, c2, c3, c4 = st.columns([2, 5, 1, 1])
+                with c1:
+                    st.caption(r["usuario_nome"])
+                with c2:
+                    st.write(r["conteudo"])
+                with c3:
+                    st.caption(f"👍 {r.get('total_votos', 0)}")
+                with c4:
+                    _confirmar_delete(
+                        chave=f"resp_{r['id']}",
+                        label=f"resposta de {r['usuario_nome']}",
+                        callback=lambda rid=r["id"]: (
+                            (res := delete(f"/admin/respostas/{rid}")) and res.status_code == 200
+                        ),
+                    )
+
+    if total_exibido == 0:
+        st.info("Nenhuma resposta encontrada para o filtro selecionado.")
 
 # =========================
 # ADMIN — PAINEL PRINCIPAL
 # =========================
 
 def painel_admin():
-    st.sidebar.title("🛡️ Admin")
-    st.sidebar.caption("Painel Administrativo")
+    # ── Sidebar
+    st.sidebar.title("🛡️ Painel Admin")
+    st.sidebar.caption("Sistema Acadêmico")
+    st.sidebar.markdown("---")
 
-    if st.sidebar.button("Sair do Admin"):
+    menu = st.sidebar.radio(
+        "Seções",
+        [
+            "📊 Dashboard",
+            "👥 Usuários",
+            "✏️ Editar Usuário",
+            "📋 Desafios",
+            "🏫 Cursos e Disciplinas",
+            "💬 Respostas",
+        ],
+    )
+
+    st.sidebar.markdown("---")
+    if st.sidebar.button("🚪 Sair do Admin", use_container_width=True):
         st.session_state.admin_logado = False
         st.rerun()
 
-    st.sidebar.markdown("---")
-
-    menu = st.sidebar.radio("Gerenciar", [
-        "👥 Usuários",
-        "✏️ Editar Usuário",
-        "📋 Desafios",
-        "🏫 Cursos e Disciplinas",
-        "💬 Respostas",
-    ])
-
+    # ── Conteúdo
     paginas_admin = {
-        "👥 Usuários": adm_pagina_usuarios,
-        "✏️ Editar Usuário": adm_pagina_editar_usuario,
-        "📋 Desafios": adm_pagina_desafios,
+        "📊 Dashboard":            adm_pagina_dashboard,
+        "👥 Usuários":             adm_pagina_usuarios,
+        "✏️ Editar Usuário":       adm_pagina_editar_usuario,
+        "📋 Desafios":             adm_pagina_desafios,
         "🏫 Cursos e Disciplinas": adm_pagina_cursos,
-        "💬 Respostas": adm_pagina_respostas,
+        "💬 Respostas":            adm_pagina_respostas,
     }
     paginas_admin[menu]()
 
