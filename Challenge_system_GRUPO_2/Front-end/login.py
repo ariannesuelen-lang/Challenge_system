@@ -2,9 +2,7 @@ import streamlit as st
 import hashlib
 import re
 from supabase import create_client, Client
-
-st.set_page_config(page_title="Sistema de Login", layout="centered")
-
+from Challenge_system_GRUPO_2.login import tela_login
 # ─────────────────────────────────────────
 # CONEXÃO COM SUPABASE
 # ─────────────────────────────────────────
@@ -117,11 +115,14 @@ with st.sidebar:
         if st.button("📝 Cadastrar", use_container_width=True):
             st.session_state.pagina = "cadastrar"
             st.rerun()
-
+            
 # ─────────────────────────────────────────
 # PÁGINA: LOGIN
 # ─────────────────────────────────────────
+def tela_login():
+    
 if st.session_state.pagina == "login":
+    
     st.title("🔑 Sistema de Login")
 
     if st.session_state.usuario_logado:
