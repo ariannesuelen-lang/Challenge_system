@@ -1,5 +1,6 @@
 import streamlit as st    # Importa a biblioteca Streamlit
 import pandas as pd       # Importa a biblioteca pandas para manipular os dados em formato de tabela
+from Challenge_system_GRUPO_2.login import tela_login   # importar a parte de login
 
 # CONEXAO COM BACKEND
 from conexao import (    # Importa funções do arquivo conexao.py (ele que vai mexer no banco de dados)
