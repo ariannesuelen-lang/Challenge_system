@@ -133,7 +133,7 @@ def tela_login():
 if "usuario_logado" not in st.session_state:
         st.session_state.usuario_logado = None
 
-    if "pagina_login" not in st.session_state:
+if "pagina_login" not in st.session_state:
         st.session_state.pagina_login = "login"
     
     # ─────────────────────────────────────────
