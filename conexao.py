@@ -22,7 +22,7 @@ def buscar_votos_por_desafio(desafio):
     return supabase.table("votos").select("*").eq("desafio", desafio).execute()
 
 def buscar_voto_por_id(id):
-    return supabase.table("votos").select("*").eq("id", id).execute()
+    return supabase.table("votos").select("*").eq("id", int(id)).execute()
 
 def atualizar_voto(id, novo_voto):
     return supabase.table("votos").update({
