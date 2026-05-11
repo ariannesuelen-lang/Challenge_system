@@ -24,9 +24,12 @@ if 'voto_id' not in st.session_state:    # Armazena o ID do voto que será edita
 if 'desafio' not in st.session_state:    # Armazena qual desafio foi selecionado
     st.session_state.desafio = None
 
-# Simulando o ID do usuário logado
-if 'id_usuario' not in st.session_state: # Armazena o ID dinâmico do usuário (para evitar votos duplicados)
-    st.session_state.id_usuario = "user_123" # ID gerado pelo time de login
+# COMENTAR
+if 'logado' not in st.session_state:
+    st.session_state.logado = False
+
+if 'id_usuario' not in st.session_state:
+    st.session_state.id_usuario = None
 
 
 # FUNÇÃO DE NAVEGAÇÃO
@@ -37,11 +40,12 @@ def ir(pagina, voto_id=None, desafio=None): # Função responsável pela navega�
     st.session_state.desafio = desafio  # Salva o desafio selecionado pelo usuário  # para ser usado na tela de votação
     st.rerun()  # Recarrega a aplicação para atualizar a interface # e exibir a nova página imediatamente
 
-# CABEÇALHO
-col1, col2 = st.columns([4, 1])        # Cria duas colunas na tela (uma maior e uma menor)
+# COMENTAR
+    tela_login()
+    st.stop()
 
 with col2:              # Usa a segunda coluna
-    st.markdown("👤 *Aluno*")         # mostra o texto com o emoji (podemos mudar depois para mostrar o nome do usuário - Falar com grupo 2)
+    st.markdown(f"👤 *{st.session_state.id_usuario}*")      #COMENTAR
  
 st.divider()            # Linha divisória
 
