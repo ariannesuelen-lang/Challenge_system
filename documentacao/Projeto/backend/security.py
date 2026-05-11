@@ -1,5 +1,4 @@
 import os
-
 from dotenv import load_dotenv
 from passlib.context import CryptContext
 from jose import jwt, JWTError
