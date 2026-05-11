@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from backend.routers import auth, cursos, disciplinas, desafios, respostas, votos
+
+from backend.routers import auth, cursos, disciplinas, desafios, respostas, votos, users
 
 app = FastAPI()
 
@@ -12,6 +13,8 @@ app.add_middleware(
 )
 
 app.include_router(auth.router)
+app.include_router(users.router)
+
 app.include_router(cursos.router)
 app.include_router(disciplinas.router)
 app.include_router(desafios.router)
