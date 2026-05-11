@@ -1,5 +1,4 @@
 from fastapi import APIRouter, Depends, HTTPException
-
 from backend.database import supabase
 from backend.security import get_current_user
 
