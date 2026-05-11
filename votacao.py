@@ -29,10 +29,12 @@ if 'id_usuario' not in st.session_state: # Armazena o ID dinâmico do usuário (
 
 
 # FUNÇÃO DE NAVEGAÇÃO
-def ir(pagina):                           # Função para mudar de página
-    st.session_state.pagina = pagina      # atualiza a página atual
-    st.rerun()                            # recarrega a tela para refletir a mudança
 
+def ir(pagina, voto_id=None, desafio=None): # Função responsável pela navegação entre telas
+    st.session_state.pagina = pagina  # Salva no session_state qual página será exibida
+    st.session_state.voto_id = voto_id # Salva o ID do voto (usado na tela de edição)  # Caso nenhum valor seja passado, permanece None
+    st.session_state.desafio = desafio  # Salva o desafio selecionado pelo usuário  # para ser usado na tela de votação
+    st.rerun()  # Recarrega a aplicação para atualizar a interface # e exibir a nova página imediatamente
 
 # CABEÇALHO
 col1, col2 = st.columns([4, 1])        # Cria duas colunas na tela (uma maior e uma menor)
