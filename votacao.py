@@ -25,12 +25,8 @@ if 'desafio' not in st.session_state:    # Armazena qual desafio foi selecionado
     st.session_state.desafio = None
 
 # COMENTAR
-if 'logado' not in st.session_state:
-    st.session_state.logado = False
-
 if 'id_usuario' not in st.session_state:
     st.session_state.id_usuario = None
-
 
 # FUNÇÃO DE NAVEGAÇÃO
 
@@ -41,11 +37,25 @@ def ir(pagina, voto_id=None, desafio=None): # Função responsável pela navega�
     st.rerun()  # Recarrega a aplicação para atualizar a interface # e exibir a nova página imediatamente
 
 # COMENTAR
-    tela_login()
-    st.stop()
+if not st.session_state.get("usuario_logado"):   # Verifica se existe usuário logado
+
+    tela_login()     # Mostra a tela de login
+    st.stop()        # Interrompe o restante do sistema até logar
+
+else:
+    st.session_state.id_usuario = st.session_state.usuario_logado["email"]   # Salva o email do usuário logado como ID
+
+
+# CABEÇALHO
+col1, col2 = st.columns([4, 1])        # Cria duas colunas na tela (uma maior e uma menor)
 
 with col2:              # Usa a segunda coluna
-    st.markdown(f"👤 *{st.session_state.id_usuario}*")      #COMENTAR
+    st.markdown(f"👤 *{st.session_state.usuario_logado['nome']}*")      #COMENTAR
+
+    if st.button("Sair"):        # Botão de logout
+        st.session_state.usuario_logado = None
+        st.session_state.id_usuario = None
+        st.rerun()
  
 st.divider()            # Linha divisória
 
