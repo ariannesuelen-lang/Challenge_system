@@ -27,7 +27,7 @@ def buscar_voto_por_id(id):
 def atualizar_voto(id, novo_voto):
     return supabase.table("votos").update({
         "voto": novo_voto
-    }).eq("id", id).execute()
+    }).eq("id", int(id)).execute()
 
 def deletar_voto(id):
-    return supabase.table("votos").delete().eq("id", id).execute()
+    return supabase.table("votos").delete().eq("id", int(id)).execute()
