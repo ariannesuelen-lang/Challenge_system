@@ -1,0 +1,899 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Documentação do Sistema de Metodologias Ativas</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: Arial, sans-serif;
+    }
+
+    body {
+      background: #0f172a;
+      color: #f8fafc;
+      line-height: 1.6;
+    }
+
+    header {
+      background: linear-gradient(135deg, #1e293b, #0f172a);
+      padding: 40px 20px;
+      text-align: center;
+      border-bottom: 2px solid #334155;
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+    }
+
+    header h1 {
+      font-size: 2.5rem;
+      margin-bottom: 10px;
+      color: #38bdf8;
+    }
+
+    header p {
+      max-width: 900px;
+      margin: auto;
+      color: #cbd5e1;
+    }
+
+    nav {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 10px;
+      margin-top: 20px;
+    }
+
+    nav button {
+      background: #1e40af;
+      border: none;
+      padding: 12px 18px;
+      border-radius: 10px;
+      color: white;
+      cursor: pointer;
+      transition: 0.3s;
+      font-weight: bold;
+    }
+
+    nav button:hover {
+      background: #2563eb;
+      transform: scale(1.05);
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: auto;
+      padding: 30px 20px;
+    }
+
+    .module {
+      background: #1e293b;
+      margin-bottom: 30px;
+      border-radius: 20px;
+      overflow: hidden;
+      border: 1px solid #334155;
+      box-shadow: 0 0 20px rgba(0,0,0,0.3);
+      transition: 0.3s;
+    }
+
+    .module:hover {
+      transform: translateY(-5px);
+    }
+
+    .module-header {
+      padding: 25px;
+      background: linear-gradient(135deg, #2563eb, #1d4ed8);
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .module-header h2 {
+      font-size: 1.8rem;
+    }
+
+    .module-content {
+      padding: 25px;
+      display: none;
+      animation: fadeIn 0.5s ease;
+    }
+
+    .module.active .module-content {
+      display: block;
+    }
+
+    .section {
+      margin-bottom: 30px;
+    }
+
+    .section h3 {
+      color: #38bdf8;
+      margin-bottom: 10px;
+      font-size: 1.3rem;
+      border-left: 5px solid #38bdf8;
+      padding-left: 10px;
+    }
+
+    ul {
+      margin-left: 25px;
+      margin-top: 10px;
+    }
+
+    li {
+      margin-bottom: 8px;
+    }
+
+    .feature-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 20px;
+      margin-top: 20px;
+    }
+
+    .feature-card {
+      background: #0f172a;
+      padding: 20px;
+      border-radius: 15px;
+      border: 1px solid #334155;
+      transition: 0.3s;
+    }
+
+    .feature-card:hover {
+      background: #111c31;
+      transform: scale(1.03);
+    }
+
+    .feature-card h4 {
+      color: #60a5fa;
+      margin-bottom: 10px;
+    }
+
+    .tag {
+      display: inline-block;
+      background: #1d4ed8;
+      padding: 6px 12px;
+      border-radius: 20px;
+      margin: 5px;
+      font-size: 0.9rem;
+    }
+
+    footer {
+      text-align: center;
+      padding: 30px;
+      background: #020617;
+      color: #94a3b8;
+      margin-top: 40px;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 15px;
+      margin-top: 25px;
+    }
+
+    .stat-box {
+      background: #0f172a;
+      border-radius: 15px;
+      padding: 20px;
+      text-align: center;
+      border: 1px solid #334155;
+    }
+
+    .stat-box h2 {
+      color: #38bdf8;
+      font-size: 2rem;
+    }
+
+    .search-box {
+      width: 100%;
+      max-width: 500px;
+      margin: 20px auto;
+      display: block;
+      padding: 14px;
+      border-radius: 12px;
+      border: none;
+      outline: none;
+      font-size: 1rem;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(-10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .sprint-atual {
+      border: 2px solid #22c55e !important;
+      box-shadow: 0 0 25px rgba(34,197,94,0.5);
+      position: relative;
+    }
+
+    .sprint-atual::before {
+      content: 'SPRINT ATUAL';
+      position: absolute;
+      top: -12px;
+      right: 15px;
+      background: #22c55e;
+      color: #02120a;
+      padding: 5px 10px;
+      border-radius: 10px;
+      font-size: 0.8rem;
+      font-weight: bold;
+    }
+
+    @media (max-width: 768px) {
+      header h1 {
+        font-size: 2rem;
+      }
+
+      .module-header h2 {
+        font-size: 1.3rem;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>Sistema de Metodologias Ativas</h1>
+    <p>
+      Plataforma educacional desenvolvida para apoiar metodologias ativas em sala de aula,
+      utilizando gamificação, avaliações dinâmicas, colaboração e tecnologia para aumentar
+      o engajamento dos estudantes.
+    </p>
+
+    <nav>
+      <button onclick="scrollToModule('visao')">Visão Geral</button>
+      <button onclick="scrollToModule('desafios')">Desafios</button>
+      <button onclick="scrollToModule('mini-provas')">Mini Provas</button>
+      <button onclick="scrollToModule('batalha')">Batalha de Equipes</button>
+      <button onclick="scrollToModule('quiz')">Quiz Ao Vivo</button>
+      <button onclick="scrollToModule('futuro')">Futuro</button>
+    </nav>
+  </header>
+
+  <div class="container">
+
+    <section id="sprints" class="module active">
+      <div class="module-header" onclick="toggleModule(this)">
+        <h2>Premissas do Projeto e Planejamento das Sprints</h2>
+        <span>▼</span>
+      </div>
+
+      <div class="module-content" style="display:block;">
+
+        <div class="section">
+          <h3>Premissas do Projeto</h3>
+
+          <p>
+            O desenvolvimento do sistema será realizado utilizando princípios de metodologias ágeis,
+            com foco em organização incremental, entregas contínuas e evolução progressiva do produto.
+          </p>
+
+          <ul>
+            <li>As sprints ocorrerão a cada duas semanas;</li>
+            <li>O planejamento inicia na semana do dia 09 de março;</li>
+            <li>O projeto terá duração total de 8 semanas;</li>
+            <li>Cada sprint possuirá valor avaliativo para composição da nota da disciplina;</li>
+            <li>As entregas deverão apresentar evolução funcional do sistema;</li>
+            <li>Os estudantes deverão atuar de forma colaborativa durante todo o desenvolvimento.</li>
+          </ul>
+        </div>
+
+        <div class="section">
+          <h3>Cronograma das Sprints</h3>
+
+          <div class="feature-grid" id="sprint-grid">
+
+            <div class="feature-card sprint-card" data-start="2026-03-09" data-end="2026-03-22">
+              <h4>Sprint 1</h4>
+              <p><strong>Período:</strong> 09/03 até 22/03</p>
+              <p><strong>Valor:</strong> 2,0 pontos</p>
+              <ul>
+                <li>Definição dos papéis e responsabilidades;</li>
+                <li>Construção do Product Backlog;</li>
+                <li>Definição do MVP;</li>
+                <li>Planejamento inicial do projeto.</li>
+              </ul>
+            </div>
+
+            <div class="feature-card sprint-card" data-start="2026-03-23" data-end="2026-04-05">
+              <h4>Sprint 2</h4>
+              <p><strong>Período:</strong> 23/03 até 05/04</p>
+              <p><strong>Valor:</strong> 2,0 pontos</p>
+              <ul>
+                <li>Desenvolvimento do MVP;</li>
+                <li>Estrutura inicial do sistema;</li>
+                <li>Primeiras funcionalidades principais.</li>
+              </ul>
+            </div>
+
+            <div class="feature-card sprint-card" data-start="2026-04-06" data-end="2026-04-19">
+              <h4>Sprint 3</h4>
+              <p><strong>Período:</strong> 06/04 até 19/04</p>
+              <p><strong>Valor:</strong> 2,0 pontos</p>
+              <ul>
+                <li>Desenvolvimento do módulo de desafios;</li>
+                <li>Implementação do sistema de login;</li>
+                <li>Integração inicial entre usuários e funcionalidades.</li>
+              </ul>
+            </div>
+
+            <div class="feature-card sprint-card" data-start="2026-04-20" data-end="2026-05-03">
+              <h4>Sprint 4</h4>
+              <p><strong>Período:</strong> 20/04 até 03/05</p>
+              <p><strong>Valor:</strong> 2,0 pontos</p>
+              <ul>
+                <li>Integração das partes do sistema;</li>
+                <li>Correções de comunicação entre módulos;</li>
+                <li>Melhoria da navegação e fluxo da aplicação.</li>
+              </ul>
+            </div>
+
+            <div class="feature-card sprint-card" data-start="2026-05-04" data-end="2026-05-17">
+              <h4>Sprint 5</h4>
+              <p><strong>Período:</strong> 04/05 até 17/05</p>
+              <p><strong>Valor:</strong> 2,0 pontos</p>
+              <ul>
+                <li>Refinamento das funcionalidades;</li>
+                <li>Melhorias de interface e experiência do usuário;</li>
+                <li>Correção de bugs;</li>
+                <li>Validação das funcionalidades já implementadas.</li>
+              </ul>
+            </div>
+
+            <div class="feature-card sprint-card" data-start="2026-05-18" data-end="2026-05-31">
+              <h4>Sprint 6</h4>
+              <p><strong>Período:</strong> 18/05 até 31/05</p>
+              <p><strong>Valor:</strong> 2,0 pontos</p>
+              <ul>
+                <li>Backlog não definido;</li>
+                <li>Funcionalidades a serem planejadas durante a evolução do projeto.</li>
+              </ul>
+            </div>
+
+            <div class="feature-card sprint-card" data-start="2026-06-01" data-end="2026-06-14">
+              <h4>Sprint 7</h4>
+              <p><strong>Período:</strong> 01/06 até 14/06</p>
+              <p><strong>Valor:</strong> 2,0 pontos</p>
+              <ul>
+                <li>Backlog não definido;</li>
+                <li>Entrega parcial prevista para a semana do dia 08/06;</li>
+                <li>Ajustes e refinamentos das funcionalidades.</li>
+              </ul>
+            </div>
+
+            <div class="feature-card sprint-card" data-start="2026-06-15" data-end="2026-06-28">
+              <h4>Sprint 8</h4>
+              <p><strong>Período:</strong> 15/06 até 28/06</p>
+              <p><strong>Valor:</strong> 2,0 pontos</p>
+              <ul>
+                <li>Backlog não definido;</li>
+                <li>Finalização do sistema;</li>
+                <li>Correções finais;</li>
+                <li>Preparação para entrega final e apresentação.</li>
+              </ul>
+            </div>
+
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <input type="text" class="search-box" id="searchInput" placeholder="Pesquisar funcionalidades, módulos ou conceitos..." />
+
+    <section id="visao" class="module active">
+      <div class="module-header" onclick="toggleModule(this)">
+        <h2>Visão Geral do Sistema</h2>
+        <span>▼</span>
+      </div>
+
+      <div class="module-content">
+        <div class="section">
+          <h3>Objetivo Geral</h3>
+          <p>
+            O sistema tem como objetivo apoiar a aplicação de metodologias ativas em sala de aula
+            por meio de recursos tecnológicos e gamificação. A plataforma busca aumentar o engajamento
+            dos estudantes, incentivar a participação ativa e fornecer mecanismos dinâmicos de avaliação
+            e colaboração.
+          </p>
+        </div>
+
+        <div class="section">
+          <h3>Estrutura Modular</h3>
+          <p>
+            O sistema é dividido em módulos independentes, cada um responsável por uma estratégia
+            pedagógica específica.
+          </p>
+        </div>
+
+        <div class="stats">
+          <div class="stat-box">
+            <h2>4</h2>
+            <p>Módulos Principais</p>
+          </div>
+
+          <div class="stat-box">
+            <h2>100%</h2>
+            <p>Foco em Gamificação</p>
+          </div>
+
+          <div class="stat-box">
+            <h2>∞</h2>
+            <p>Possibilidades de Expansão</p>
+          </div>
+
+          <div class="stat-box">
+            <h2>IA</h2>
+            <p>Integrações Futuras</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="desafios" class="module">
+      <div class="module-header" onclick="toggleModule(this)">
+        <h2>1. Módulo de Desafios</h2>
+        <span>▼</span>
+      </div>
+
+      <div class="module-content">
+
+        <div class="section">
+          <h3>Objetivo</h3>
+          <p>
+            Permitir a criação e gerenciamento de desafios colaborativos ou competitivos dentro da sala de aula.
+          </p>
+
+          <p>Os desafios incentivam:</p>
+
+          <div>
+            <span class="tag">trabalho em equipe</span>
+            <span class="tag">resolução de problemas</span>
+            <span class="tag">aprendizagem prática</span>
+            <span class="tag">participação ativa</span>
+          </div>
+        </div>
+
+        <div class="section">
+          <h3>Funcionamento Geral</h3>
+          <p>
+            O professor cria um desafio contendo título, descrição, regras, critérios de avaliação e prazo de participação.
+          </p>
+
+          <p>Os alunos podem:</p>
+
+          <ul>
+            <li>se inscrever no desafio;</li>
+            <li>participar individualmente ou em grupo;</li>
+            <li>submeter respostas ou soluções;</li>
+            <li>avaliar os colegas conforme os critérios definidos.</li>
+          </ul>
+        </div>
+
+        <div class="section">
+          <h3>Funcionalidades Principais</h3>
+
+          <div class="feature-grid">
+            <div class="feature-card">
+              <h4>Cadastro de Desafios</h4>
+              <p>Permite ao professor criar e editar desafios.</p>
+            </div>
+
+            <div class="feature-card">
+              <h4>Inscrição de Alunos</h4>
+              <p>Os estudantes podem entrar nos desafios disponíveis.</p>
+            </div>
+
+            <div class="feature-card">
+              <h4>Avaliação entre Pares</h4>
+              <p>Os próprios alunos podem atribuir notas e feedbacks aos participantes.</p>
+            </div>
+
+            <div class="feature-card">
+              <h4>Sistema de Pontuação</h4>
+              <p>Cada desafio gera pontos para os participantes.</p>
+            </div>
+
+            <div class="feature-card">
+              <h4>Ranking</h4>
+              <p>Exibe os alunos ou equipes com maior desempenho.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="section">
+          <h3>Benefícios Pedagógicos</h3>
+
+          <ul>
+            <li>estímulo à autonomia;</li>
+            <li>aprendizagem colaborativa;</li>
+            <li>desenvolvimento de pensamento crítico;</li>
+            <li>incentivo à participação ativa;</li>
+            <li>fortalecimento da avaliação formativa.</li>
+          </ul>
+        </div>
+
+      </div>
+    </section>
+
+    <section id="mini-provas" class="module">
+      <div class="module-header" onclick="toggleModule(this)">
+        <h2>2. Módulo de Mini Provas</h2>
+        <span>▼</span>
+      </div>
+
+      <div class="module-content">
+
+        <div class="section">
+          <h3>Objetivo</h3>
+          <p>
+            Aplicar avaliações rápidas e frequentes durante as aulas, promovendo revisão contínua e fixação do conteúdo.
+          </p>
+        </div>
+
+        <div class="section">
+          <h3>Funcionamento Geral</h3>
+
+          <p>As mini provas possuem:</p>
+
+          <ul>
+            <li>5 questões;</li>
+            <li>1 minuto por questão;</li>
+            <li>tempo total cronometrado;</li>
+            <li>correção automática.</li>
+          </ul>
+
+          <p>
+            As questões são selecionadas aleatoriamente para cada aluno, reduzindo repetição e compartilhamento de respostas.
+          </p>
+        </div>
+
+        <div class="section">
+          <h3>Funcionalidades Principais</h3>
+
+          <div class="feature-grid">
+            <div class="feature-card">
+              <h4>Banco de Questões</h4>
+              <p>
+                O professor cadastra questões separadas por disciplina, assunto e dificuldade.
+              </p>
+            </div>
+
+            <div class="feature-card">
+              <h4>Sorteio Aleatório</h4>
+              <p>
+                Cada aluno recebe uma combinação diferente de questões.
+              </p>
+            </div>
+
+            <div class="feature-card">
+              <h4>Cronômetro Automático</h4>
+              <p>
+                Cada questão possui limite de tempo individual.
+              </p>
+            </div>
+
+            <div class="feature-card">
+              <h4>Correção Automática</h4>
+              <p>
+                O sistema calcula a pontuação imediatamente.
+              </p>
+            </div>
+
+            <div class="feature-card">
+              <h4>Sistema de Pontos</h4>
+              <p>
+                Os alunos acumulam pontos utilizáveis na composição de notas da disciplina.
+              </p>
+            </div>
+
+            <div class="feature-card">
+              <h4>Histórico de Desempenho</h4>
+              <p>
+                Permite acompanhar acertos, erros, evolução e tempo médio de resposta.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div class="section">
+          <h3>Benefícios Pedagógicos</h3>
+
+          <ul>
+            <li>reforço contínuo do conteúdo;</li>
+            <li>aprendizagem baseada em repetição espaçada;</li>
+            <li>maior engajamento durante as aulas;</li>
+            <li>feedback imediato;</li>
+            <li>incentivo ao estudo constante.</li>
+          </ul>
+        </div>
+
+      </div>
+    </section>
+
+    <section id="batalha" class="module">
+      <div class="module-header" onclick="toggleModule(this)">
+        <h2>3. Módulo de Batalha de Equipes</h2>
+        <span>▼</span>
+      </div>
+
+      <div class="module-content">
+
+        <div class="section">
+          <h3>Objetivo</h3>
+          <p>
+            Promover competições colaborativas entre grupos de alunos utilizando elementos de gamificação.
+          </p>
+        </div>
+
+        <div class="section">
+          <h3>Funcionamento Geral</h3>
+
+          <p>
+            Os alunos são organizados em equipes que acumulam pontos ao longo da disciplina.
+          </p>
+
+          <p>Os pontos podem ser obtidos por:</p>
+
+          <ul>
+            <li>desempenho em desafios;</li>
+            <li>mini provas;</li>
+            <li>participação;</li>
+            <li>colaboração;</li>
+            <li>missões especiais.</li>
+          </ul>
+        </div>
+
+        <div class="section">
+          <h3>Funcionalidades Principais</h3>
+
+          <div class="feature-grid">
+
+            <div class="feature-card">
+              <h4>Formação de Equipes</h4>
+              <p>Criação manual ou automática de grupos.</p>
+            </div>
+
+            <div class="feature-card">
+              <h4>Ranking em Tempo Real</h4>
+              <p>Exibição da classificação das equipes.</p>
+            </div>
+
+            <div class="feature-card">
+              <h4>Missões Bônus</h4>
+              <p>Atividades extras que geram pontuação adicional.</p>
+            </div>
+
+            <div class="feature-card">
+              <h4>Sistema de Recompensas</h4>
+              <p>Possibilidade de desbloquear vantagens ou bônus.</p>
+            </div>
+
+            <div class="feature-card">
+              <h4>Temporadas</h4>
+              <p>Competições organizadas por períodos letivos ou unidades.</p>
+            </div>
+
+          </div>
+        </div>
+
+        <div class="section">
+          <h3>Benefícios Pedagógicos</h3>
+
+          <ul>
+            <li>fortalecimento do trabalho em equipe;</li>
+            <li>aumento do engajamento;</li>
+            <li>incentivo à colaboração;</li>
+            <li>desenvolvimento de habilidades interpessoais;</li>
+            <li>maior motivação em sala de aula.</li>
+          </ul>
+        </div>
+
+      </div>
+    </section>
+
+    <section id="quiz" class="module">
+      <div class="module-header" onclick="toggleModule(this)">
+        <h2>4. Módulo de Quiz Ao Vivo</h2>
+        <span>▼</span>
+      </div>
+
+      <div class="module-content">
+
+        <div class="section">
+          <h3>Objetivo</h3>
+          <p>
+            Realizar quizzes interativos em tempo real durante as aulas.
+          </p>
+        </div>
+
+        <div class="section">
+          <h3>Funcionamento Geral</h3>
+
+          <p>
+            O professor inicia uma sessão ao vivo e os alunos entram utilizando um código de acesso.
+          </p>
+
+          <p>
+            As perguntas são exibidas em tempo real e os alunos respondem utilizando seus dispositivos.
+          </p>
+
+          <p>
+            O sistema apresenta rankings instantâneos e estatísticas da turma.
+          </p>
+        </div>
+
+        <div class="section">
+          <h3>Funcionalidades Principais</h3>
+
+          <div class="feature-grid">
+
+            <div class="feature-card">
+              <h4>Sessões em Tempo Real</h4>
+              <p>Criação de quizzes síncronos durante a aula.</p>
+            </div>
+
+            <div class="feature-card">
+              <h4>Entrada por Código</h4>
+              <p>Os alunos acessam rapidamente a sessão ativa.</p>
+            </div>
+
+            <div class="feature-card">
+              <h4>Questões Temporizadas</h4>
+              <p>Cada pergunta possui limite de tempo.</p>
+            </div>
+
+            <div class="feature-card">
+              <h4>Ranking Instantâneo</h4>
+              <p>Pontuação atualizada em tempo real.</p>
+            </div>
+
+            <div class="feature-card">
+              <h4>Estatísticas da Turma</h4>
+              <p>
+                Visualização de percentual de acertos, alternativas mais escolhidas e desempenho geral.
+              </p>
+            </div>
+
+            <div class="feature-card">
+              <h4>Modos de Jogo</h4>
+              <p>
+                sobrevivência, velocidade, equipes e individual.
+              </p>
+            </div>
+
+          </div>
+        </div>
+
+        <div class="section">
+          <h3>Benefícios Pedagógicos</h3>
+
+          <ul>
+            <li>aumento da participação em sala;</li>
+            <li>feedback imediato;</li>
+            <li>aprendizagem dinâmica;</li>
+            <li>revisão rápida de conteúdos;</li>
+            <li>maior interação entre professor e alunos.</li>
+          </ul>
+        </div>
+
+      </div>
+    </section>
+
+    <section id="futuro" class="module">
+      <div class="module-header" onclick="toggleModule(this)">
+        <h2>Considerações Futuras</h2>
+        <span>▼</span>
+      </div>
+
+      <div class="module-content">
+
+        <div class="section">
+          <h3>Possíveis Expansões</h3>
+
+          <div class="feature-grid">
+
+            <div class="feature-card">
+              <h4>IA para Geração de Questões</h4>
+              <p>Criação automática de questões inteligentes e adaptativas.</p>
+            </div>
+
+            <div class="feature-card">
+              <h4>Dashboards Analíticos</h4>
+              <p>Análise de desempenho da turma e indicadores pedagógicos.</p>
+            </div>
+
+            <div class="feature-card">
+              <h4>Sistema de Badges e Conquistas</h4>
+              <p>Gamificação baseada em metas e marcos alcançados.</p>
+            </div>
+
+            <div class="feature-card">
+              <h4>Integração com AVAs</h4>
+              <p>Conexão com ambientes virtuais de aprendizagem.</p>
+            </div>
+
+            <div class="feature-card">
+              <h4>Acompanhamento Adaptativo</h4>
+              <p>Monitoramento individualizado do desempenho dos alunos.</p>
+            </div>
+
+            <div class="feature-card">
+              <h4>Relatórios Automatizados</h4>
+              <p>Geração automática de relatórios pedagógicos.</p>
+            </div>
+
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+  </div>
+
+  <footer>
+    <p>
+      Sistema de Metodologias Ativas • Plataforma Educacional Gamificada • Laboratório de Desenvolvimento de Software
+    </p>
+  </footer>
+
+  <script>
+    function toggleModule(element) {
+      const module = element.parentElement;
+      module.classList.toggle('active');
+    }
+
+    function scrollToModule(id) {
+      document.getElementById(id).scrollIntoView({
+        behavior: 'smooth'
+      });
+    }
+
+    const searchInput = document.getElementById('searchInput');
+
+    searchInput.addEventListener('keyup', function () {
+      const filter = searchInput.value.toLowerCase();
+      const modules = document.querySelectorAll('.module');
+
+      modules.forEach(module => {
+        const text = module.innerText.toLowerCase();
+
+        if (text.includes(filter)) {
+          module.style.display = 'block';
+        } else {
+          module.style.display = 'none';
+        }
+      });
+    });
+  function destacarSprintAtual() {
+      const hoje = new Date();
+      const sprintCards = document.querySelectorAll('.sprint-card');
+
+      sprintCards.forEach(card => {
+        const inicio = new Date(card.dataset.start);
+        const fim = new Date(card.dataset.end);
+
+        if (hoje >= inicio && hoje <= fim) {
+          card.classList.add('sprint-atual');
+        }
+      });
+    }
+
+    destacarSprintAtual();
+  </script>
+
+</body>
+</html>
