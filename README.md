@@ -7,6 +7,7 @@ Acesso ao Notion: https://www.notion.so/invite/03cf63e02886c912d8564c84ba2dc3bb0
 Observação: Em cada commit, comentar o que foi feito e colocar o nome dos participantes (# e @)
 
 
+
 COMO A MAIN ESTÁ ORGANIZADA:
 
 ````markdown
@@ -29,7 +30,8 @@ sistema_de_desafios/
 │   ├── __init__.py
 │   ├── auth_service.py
 │   ├── desafio_service.py
-│   ├── voto_service.py
+│   ├── votacao_service.py
+|   ├── participacao_service.py
 │   └── notificacao_service.py
 │
 ├── telas/
@@ -40,6 +42,9 @@ sistema_de_desafios/
 │   ├── desafios.py
 │   ├── votacao.py
 │   ├── mini_provas.py
+│   ├── quiz_ao_vivo.py
+│   ├── criar_desafios.py
+│   ├── batalha_de_equipes.py
 │   └── admin.py
 │
 ├── utils/
@@ -69,22 +74,19 @@ Lista todas as bibliotecas do projeto.
 
 ## `.streamlit/secrets.toml`
 
-- Pasta de configurações do Streamlit.
-- Guarda informações sensíveis.
+É a Pasta de configurações do Streamlit. Guarda informações sensíveis.
 
 ---
 
 ## `database/conexao.py`
 
-- Tudo relacionado ao banco de dados.
-- Conexão com o Supabase.
+Tudo relacionado ao banco de dados. Conexão com o Supabase.
 
 ---
 
 ## `services/auth_service.py`
 
-Ela guarda as regras de negócio do sistema (back-end).  
-Responsável por autenticação.
+Ela guarda as regras de negócio do sistema (back-end). Responsável por autenticação.
 
 ---
 
@@ -96,11 +98,7 @@ Todas as telas que terão (front-end).
 
 ## `utils/session.py` e `utils/permissao.py`
 
-Utilidades gerais do sistema.  
-Coisas que ajudam várias partes do projeto.
-
-- `session.py` → Controla sessão do usuário.
-- `permissao.py` → Controla permissões.
+Controla sessão do usuário. Controla permissões.
 
 ---
 
