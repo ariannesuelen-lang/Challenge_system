@@ -5,82 +5,48 @@ def listar_desafios_votacao():
 
     resposta = (
         supabase
-        .table("desafios")
+        .table("tela_desafio")
         .select("*")
-        .eq("status", "concluido")
         .execute()
     )
 
     return resposta.data
 
 
-def buscar_voto_usuario(
-    desafio_id,
-    usuario_id
-):
+def registrar_voto(usuario_id, desafio_id, nota):
 
-    resposta = (
+    verificar = (
         supabase
         .table("votos")
         .select("*")
-        .eq("desafio_id", desafio_id)
         .eq("usuario_id", usuario_id)
+        .eq("desafio_id", desafio_id)
         .execute()
     )
 
-    if resposta.data:
+    if verificar.data:
+        return False
 
-        return resposta.data[0]
-
-    return None
-
-
-def salvar_voto(
-    desafio_id,
-    usuario_id,
-    nota
-):
-
-    voto_existente = buscar_voto_usuario(
-        desafio_id,
-        usuario_id
+    (
+        supabase
+        .table("votos")
+        .insert({
+            "usuario_id": usuario_id,
+            "desafio_id": desafio_id,
+            "nota": nota
+        })
+        .execute()
     )
 
-    if voto_existente:
-
-        supabase.table(
-            "votos"
-        ).update({
-
-            "nota": nota
-
-        }).eq(
-            "id",
-            voto_existente["id"]
-        ).execute()
-
-    else:
-
-        supabase.table(
-            "votos"
-        ).insert({
-
-            "desafio_id": desafio_id,
-            "usuario_id": usuario_id,
-            "nota": nota
-
-        }).execute()
+    return True
 
 
-def listar_votos_desafio(
-    desafio_id
-):
+def listar_votos():
 
     resposta = (
         supabase
         .table("votos")
         .select("*")
-        .eq("desafio_id", desafio_id)
         .execute()
     )
 
