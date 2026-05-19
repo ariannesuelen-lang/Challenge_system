@@ -26,7 +26,7 @@ def tela_home():
     )
 
     st.info(
-        "Nenhuma apresentação disponível"
+        "Nenhum desafio disponível para voto"
     )
 
     st.divider()
