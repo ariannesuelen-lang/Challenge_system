@@ -9,7 +9,6 @@ from services.votacao_service import (
     atualizar_voto
 )
 
-
 def tela_votacao():
 
     st.title("Votação")
