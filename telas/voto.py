@@ -160,6 +160,72 @@ def tela_voto():
                 f"Total de votos: {len(df)}"
             )
 
+            # PROFESSOR E ADMIN
+            if usuario["tipo_usuario"] in [
+                "professor",
+                "admin"
+            ]:
+
+                st.divider()
+
+                st.subheader(
+                    "Lista de votos"
+                )
+
+                for voto_item in votos:
+
+                    with st.container(border=True):
+
+                        st.write(
+                            f"Aluno: {voto_item['usuario']}"
+                        )
+
+                        novo_voto = st.selectbox(
+                            "Nota",
+                            opcoes,
+                            index=opcoes.index(
+                                voto_item["voto"]
+                            ),
+                            key=f"select_{voto_item['id']}"
+                        )
+
+                        col1, col2 = st.columns(2)
+
+                        with col1:
+
+                            if st.button(
+                                "Salvar",
+                                key=f"salvar_{voto_item['id']}"
+                            ):
+
+                                atualizar_voto(
+                                    voto_item["id"],
+                                    novo_voto
+                                )
+
+                                st.success(
+                                    "Voto atualizado"
+                                )
+
+                                st.rerun()
+
+                        with col2:
+
+                            if st.button(
+                                "Excluir",
+                                key=f"delete_{voto_item['id']}"
+                            ):
+
+                                deletar_voto(
+                                    voto_item["id"]
+                                )
+
+                                st.success(
+                                    "Voto excluído"
+                                )
+
+                                st.rerun()
+
         else:
 
             st.warning(
