@@ -84,9 +84,13 @@ Tudo relacionado ao banco de dados. Conexão com o Supabase.
 
 ---
 
+## `services/`
+
+Ela guarda as regras de negócio do sistema (back-end).
+
 ## `services/auth_service.py`
 
-Ela guarda as regras de negócio do sistema (back-end). Responsável por autenticação.
+Responsável por autenticação.
 
 ---
 
