@@ -1,112 +1,89 @@
-import streamlit as st
-import pandas as pd
-
-from services.votacao_service import (
-    listar_desafios_votacao,
-    registrar_voto,
-    listar_votos
-)
+from database.conexao import supabase
 
 
-def tela_votacao():
+def listar_desafios_votacao():
 
-    st.title("Votação")
+    return [
+        {
+            "id": 1,
+            "titulo": "Teste de Voto1",
+            "descricao": "Apresentação teste 1",
+            "prazo": "2026-12-31"
+        },
 
-    usuario = st.session_state.usuario_logado
+        {
+            "id": 2,
+            "titulo": "Teste de Voto2",
+            "descricao": "Apresentação teste 2",
+            "prazo": "2026-12-31"
+        }
+    ]
 
-    desafios = listar_desafios_votacao()
 
-    if not desafios:
+def buscar_voto_usuario(usuario, desafio):
 
-        st.warning(
-            "Nenhum desafio disponível"
-        )
-
-        return
-
-    for desafio in desafios:
-
-        with st.container(border=True):
-
-            st.subheader(
-                desafio["titulo"]
-            )
-
-            st.write(
-                desafio["descricao"]
-            )
-
-            st.write(
-                f"Nível: {desafio['nivel']}"
-            )
-
-            st.write(
-                f"Prazo: {desafio['prazo']}"
-            )
-
-            voto = st.radio(
-                "Escolha seu voto",
-                ["Bom", "Regular", "Ruim"],
-                key=f"radio_{desafio['id']}"
-            )
-
-            if st.button(
-                "Enviar voto",
-                key=f"botao_{desafio['id']}"
-            ):
-
-                sucesso = registrar_voto(
-                    usuario["email"],
-                    desafio["titulo"],
-                    voto
-                )
-
-                if sucesso:
-
-                    st.success(
-                        "Voto registrado"
-                    )
-
-                    st.rerun()
-
-                else:
-
-                    st.warning(
-                        "Você já votou neste desafio"
-                    )
-
-    st.divider()
-
-    st.subheader(
-        "Resultado Geral"
+    resposta = (
+        supabase
+        .table("votos")
+        .select("*")
+        .eq("usuario", usuario)
+        .eq("desafio", desafio)
+        .execute()
     )
 
-    votos = listar_votos()
+    if resposta.data:
 
-    if votos:
+        return resposta.data[0]
 
-        df = pd.DataFrame(votos)
+    return None
 
-        contagem = (
-            df["voto"]
-            .value_counts()
-        )
 
-        contagem = contagem.reindex(
-            ["Bom", "Regular", "Ruim"],
-            fill_value=0
-        )
+def registrar_voto(usuario, desafio, voto):
 
-        st.bar_chart(contagem)
+    verificar = buscar_voto_usuario(
+        usuario,
+        desafio
+    )
 
-        st.write(
-            "Quantidade de votos:"
-        )
+    if verificar:
 
-        st.write(contagem)
+        return False
 
-    else:
+    (
+        supabase
+        .table("votos")
+        .insert({
+            "usuario": usuario,
+            "desafio": desafio,
+            "voto": voto
+        })
+        .execute()
+    )
 
-        st.info(
-            "Nenhum voto registrado"
-        )
+    return True
+
+
+def atualizar_voto(id_voto, novo_voto):
+
+    (
+        supabase
+        .table("votos")
+        .update({
+            "voto": novo_voto
+        })
+        .eq("id", id_voto)
+        .execute()
+    )
+
+
+def listar_votos_desafio(desafio):
+
+    resposta = (
+        supabase
+        .table("votos")
+        .select("*")
+        .eq("desafio", desafio)
+        .execute()
+    )
+
+    return resposta.data
