@@ -13,27 +13,28 @@ def listar_desafios_votacao():
     return resposta.data
 
 
-def registrar_voto(usuario_id, desafio_id, nota):
+def registrar_voto(usuario, desafio, voto):
 
     verificar = (
         supabase
         .table("votos")
         .select("*")
-        .eq("usuario_id", usuario_id)
-        .eq("desafio_id", desafio_id)
+        .eq("usuario", usuario)
+        .eq("desafio", desafio)
         .execute()
     )
 
     if verificar.data:
+
         return False
 
     (
         supabase
         .table("votos")
         .insert({
-            "usuario_id": usuario_id,
-            "desafio_id": desafio_id,
-            "nota": nota
+            "usuario": usuario,
+            "desafio": desafio,
+            "voto": voto
         })
         .execute()
     )
