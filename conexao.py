@@ -22,12 +22,28 @@ def buscar_votos_por_desafio(desafio):
     return supabase.table("votos").select("*").eq("desafio", desafio).execute()
 
 def buscar_voto_por_id(id):
-    return supabase.table("votos").select("*").eq("id", int(id)).execute()
+    return supabase.table("votos").select("*").eq("id", id).execute()
 
 def atualizar_voto(id, novo_voto):
     return supabase.table("votos").update({
         "voto": novo_voto
-    }).eq("id", int(id)).execute()
+    }).eq("id", id).execute()
 
 def deletar_voto(id):
-    return supabase.table("votos").delete().eq("id", int(id)).execute()
+    return supabase.table("votos").delete().eq("id", id).execute()
+
+def inserir_desafio(nome):
+    return supabase.table("desafios").insert({
+        "nome": nome
+    }).execute()
+
+def listar_desafios():
+    return supabase.table("desafios").select("*").execute()
+
+def deletar_desafio(id):
+    return supabase.table("desafios").delete().eq("id", id).execute()
+
+def atualizar_desafio(id, novo_nome):
+    return supabase.table("desafios").update({
+        "nome": novo_nome
+    }).eq("id", id).execute()
