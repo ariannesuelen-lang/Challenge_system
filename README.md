@@ -86,3 +86,51 @@ O **Sistema de Mini-Provas** é uma API desenvolvida para facilitar a criação,
 ```bash
 mkdir mini-provas-api
 cd mini-provas-api
+```
+python -m venv venv
+
+# Linux/Mac:
+source venv/bin/activate
+
+# Windows:
+venv\Scripts\activate
+
+```bash
+pip install fastapi uvicorn firebase-admin pydantic
+```
+## Exemplo de Questão
+
+```bash
+{
+  "disciplina": "Matemática",
+  "tema": "Equações do 2º grau",
+  "dificuldade": "Média",
+  "pergunta": "Qual é a soma das raízes da equação x² - 5x + 6 = 0?",
+  "alternativa_a": "3",
+  "alternativa_b": "5",
+  "alternativa_c": "6",
+  "alternativa_d": "10",
+  "resposta_correta": "5"
+}
+```
+
+## Exemplo de Resposta
+
+```bash
+{
+  "aluno_id": 1,
+  "duracao_total": "5 minutos",
+  "quantidade_questoes": 5,
+  "questoes": [
+    {
+      "id": 42,
+      "disciplina": "Matemática",
+      "tema": "Equações do 2º grau",
+      "dificuldade": "Média",
+      "pergunta": "Qual é a soma das raízes da equação x² - 5x + 6 = 0?",
+      "alternativas": ["10", "5", "3", "6"],
+      "tempo_maximo_questao": "60 segundos"
+    }
+  ]
+}
+```
