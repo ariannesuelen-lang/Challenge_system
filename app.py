@@ -16,6 +16,50 @@ from telas.mini_provas.mini_provas import (
     tela_mini_provas
 )
 
+from telas.mini_provas.mini_provas_professor import (
+    tela_mini_provas_professor
+)
+
+from telas.mini_provas.realizar_mini_prova import (
+    tela_realizar_mini_prova
+)
+
+from telas.mini_provas.resultados_mini_provas import (
+    tela_resultados_mini_provas
+)
+
+from telas.mini_provas.resultado_mini_prova import (
+    tela_resultado_mini_prova
+)
+
+from telas.mini_provas.desempenho_mini_provas import (
+    tela_desempenho_mini_provas
+)
+
+from telas.mini_provas.pontuacao_mini_provas import (
+    tela_pontuacao_mini_provas
+)
+
+from telas.mini_provas.cadastro_perguntas import (
+    tela_cadastro_perguntas
+)
+
+from telas.mini_provas.cadastro_mini_provas import (
+    tela_cadastro_mini_provas
+)
+
+from telas.mini_provas.notificacoes_mini_provas import (
+    tela_notificacoes_mini_provas
+)
+
+from telas.mini_provas.solicitacoes_reabertura import (
+    tela_solicitacoes_reabertura
+)
+
+from utils.acessibilidade import (
+    configurar_acessibilidade
+)
+
 st.set_page_config(
     page_title="Challenge System",
     layout="centered"
@@ -64,3 +108,21 @@ elif st.session_state.pagina == "quiz_ao_vivo":
 
 elif st.session_state.pagina == "batalha_de_equipes":
     tela_batalha_de_equipes()
+
+
+st.set_page_config(
+    page_title="Sistema de Desafios",
+    layout="wide"
+)
+
+configurar_acessibilidade()
+
+
+if "tipo_usuario" not in st.session_state:
+    st.session_state["tipo_usuario"] = "aluno"
+
+
+st.sidebar.title("Navegação")
+    tela_mini_provas()
+
+
