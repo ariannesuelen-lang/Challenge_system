@@ -125,7 +125,7 @@ def tela_mini_provas():
             )
 
             st.write(
-                "Disciplina: Matemática"
+                "Disciplina: Grafos aplicados a programação"
             )
 
             st.write(
