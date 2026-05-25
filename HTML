@@ -25,3 +25,185 @@
 
 </body>
 </html>
+
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <title>Battle Teams</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="login">
+
+  <h1>Battle Teams</h1>
+
+  <input id="email" placeholder="Email">
+
+  <input id="password" type="password" placeholder="Senha">
+
+  <button onclick="login()">
+    Entrar
+  </button>
+
+</div>
+
+
+<script src="app.js"></script>
+
+</body>
+</html>
+
+body{
+  background:#111;
+  color:white;
+  font-family:Arial;
+  padding:40px;
+}
+
+input{
+  display:block;
+  margin:10px 0;
+  padding:10px;
+  width:300px;
+}
+
+button{
+  padding:10px;
+  background:#00b894;
+  border:none;
+  color:white;
+  cursor:pointer;
+}
+
+li{
+  margin:10px 0;
+}
+
+const API = "http://localhost:3000";
+
+const socket = io(API);
+
+async function login() {
+
+  const email =
+    document.getElementById("email").value;
+
+  const password =
+    document.getElementById("password").value;
+
+  const response = await fetch(
+    `${API}/auth/login`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        email,
+        password
+      })
+    }
+  );
+
+  const data = await response.json();
+
+  localStorage.setItem(
+    "token",
+    data.token
+  );
+
+  window.location =
+    "dashboard.html";
+}
+
+async function createTeam() {
+
+  const name =
+    document.getElementById("teamName").value;
+
+  await fetch(`${API}/teams`, {
+
+    method: "POST",
+
+    headers: {
+      "Content-Type": "application/json",
+      Authorization:
+        localStorage.getItem("token")
+    },
+
+    body: JSON.stringify({ name })
+  });
+
+  loadTeams();
+}
+
+async function loadTeams() {
+
+  const response =
+    await fetch(`${API}/teams`);
+
+  const teams =
+    await response.json();
+
+  const ul =
+    document.getElementById("teams");
+
+  ul.innerHTML = "";
+
+  teams.forEach(team => {
+
+    const li =
+      document.createElement("li");
+
+    li.innerHTML = `
+      ${team.name}
+      - ${team.score} pontos
+
+      <button onclick="addScore('${team._id}')">
+        +10
+      </button>
+    `;
+
+    ul.appendChild(li);
+  });
+}
+
+async function addScore(id) {
+
+  await fetch(
+    `${API}/teams/${id}/score`,
+    {
+      method: "POST",
+
+      headers: {
+        "Content-Type":
+          "application/json",
+
+        Authorization:
+          localStorage.getItem("token")
+      },
+
+      body: JSON.stringify({
+        points: 10
+      })
+    }
+  );
+
+  socket.emit("scoreUpdate", {
+    room: "global"
+  });
+
+  loadTeams();
+}
+
+socket.on("newScore", () => {
+
+  loadTeams();
+});
+
+if(document.getElementById("teams")){
+
+  loadTeams();
+}
