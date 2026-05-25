@@ -8,3 +8,7 @@ def iniciar_session():
 
     if "pagina" not in st.session_state:
         st.session_state.pagina = "login"
+        
+    if "tipo_usuario" not in st.session_state:
+
+    st.session_state.tipo_usuario = "aluno"
