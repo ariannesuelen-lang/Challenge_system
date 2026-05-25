@@ -11,3 +11,6 @@ def iniciar_session():
         
     if "tipo_usuario" not in st.session_state:
         st.session_state.tipo_usuario = "aluno"
+
+    if "alto_contraste" not in st.session_state:
+        st.session_state.alto_contraste = False
