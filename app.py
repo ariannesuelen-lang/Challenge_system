@@ -96,12 +96,19 @@ elif st.session_state.pagina == "votacao":
 
 elif st.session_state.pagina == "voto":
     tela_voto()
-
-elif st.session_state.pagina == "mini_provas":
-    tela_mini_provas()
-
+    
 elif st.session_state.pagina == "quiz_ao_vivo":
     tela_quiz_ao_vivo()
 
 elif st.session_state.pagina == "batalha_de_equipes":
     tela_batalha_de_equipes()
+
+elif st.session_state.pagina == "mini_provas":
+
+    if st.session_state.tipo_usuario == "professor":
+
+        tela_mini_provas_professor()
+
+    else:
+
+        tela_mini_provas()
