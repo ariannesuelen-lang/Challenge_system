@@ -56,9 +56,6 @@ from telas.mini_provas.solicitacoes_reabertura import (
     tela_solicitacoes_reabertura
 )
 
-from utils.acessibilidade import (
-    configurar_acessibilidade
-)
 
 st.set_page_config(
     page_title="Challenge System",
@@ -66,8 +63,6 @@ st.set_page_config(
 )
 
 iniciar_session()
-
-configurar_acessibilidade()
 
 pagina = st.session_state.pagina
 
