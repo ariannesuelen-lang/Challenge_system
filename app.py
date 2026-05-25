@@ -8,7 +8,7 @@ from telas.cadastro import tela_cadastro
 from telas.home import tela_home
 from telas.quiz_ao_vivo import tela_quiz_ao_vivo
 from telas.batalha_de_equipes import tela_batalha_de_equipes
-from telas.mini_provas import tela_mini_provas
+from telas.mini_provas.mini_provas import tela_mini_provas_mini_provas
 from telas.votacao import tela_votacao
 from telas.voto import tela_voto
 from telas.desafios import tela_desafios
@@ -54,7 +54,7 @@ elif st.session_state.pagina == "voto":
     tela_voto()
 
 elif st.session_state.pagina == "mini_provas":
-    tela_mini_provas()
+    tela_mini_provas_mini_provas()
 
 elif st.session_state.pagina == "quiz_ao_vivo":
     tela_quiz_ao_vivo()
