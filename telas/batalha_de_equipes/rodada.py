@@ -2,7 +2,8 @@ import streamlit as st
 from services.batalha_de_equipes_service import (
     listar_batalhas, obter_batalha,
     enviar_resposta_batalha, listar_respostas_batalha,
-    usuario_ja_respondeu, finalizar_batalha
+    usuario_ja_respondeu, finalizar_batalha,
+    lancar_pontuacao_rodada, obter_ranking_batalha
 )
 
 
@@ -41,6 +42,20 @@ def tela_batalha_rodada():
     if b.get("descricao"):
         st.info(b["descricao"])
 
+    col1, col2 = st.columns(2)
+    col1.metric("Rodadas", b.get("quantidade_rodadas", "-"))
+    col2.metric("Tempo por rodada", f"{b.get('tempo_por_rodada_minutos', '-')} min")
+
+    if b.get("regras_conduta"):
+        with st.expander("Regras de conduta"):
+            st.write(b["regras_conduta"])
+
+    criterios = b.get("criterios_avaliacao") or []
+    if criterios:
+        with st.expander("Criterios de avaliacao"):
+            for c in criterios:
+                st.markdown(f"- {c}")
+
     st.divider()
 
     # --------------------------------------------------
@@ -58,14 +73,19 @@ def tela_batalha_rodada():
                 if not conteudo or not conteudo.strip():
                     st.warning("Escreva sua resposta antes de enviar.")
                 else:
-                    if enviar_resposta_batalha(bid, user_id, conteudo):
-                        st.success("Resposta enviada!")
+                    ok, msg = enviar_resposta_batalha(bid, user_id, conteudo)
+                    if ok:
+                        st.success(msg)
                         st.rerun()
                     else:
-                        st.error("Erro ao enviar resposta.")
+                        st.error(msg)
+
+        st.divider()
+        st.subheader("Ranking atual")
+        _mostrar_ranking(bid)
 
     # --------------------------------------------------
-    # PROFESSOR: ve todas as respostas
+    # PROFESSOR: ve respostas e lanca pontuacao
     # --------------------------------------------------
     else:
 
@@ -84,11 +104,58 @@ def tela_batalha_rodada():
                     st.caption(str(r.get("criado_em", "")))
 
         st.divider()
+        st.subheader("Lancar pontuacao por rodada")
+
+        criterios_lista = criterios if criterios else ["Logica", "Organizacao", "Criatividade"]
+
+        with st.container(border=True):
+
+            col1, col2 = st.columns(2)
+
+            with col1:
+                aluno_id = st.number_input("ID do aluno", min_value=1, step=1)
+
+            with col2:
+                rodada_n = st.number_input(
+                    "Rodada",
+                    min_value=1,
+                    max_value=int(b.get("quantidade_rodadas", 10)),
+                    step=1
+                )
+
+            pontos_criterio = {}
+            for c in criterios_lista:
+                pontos_criterio[c] = st.slider(
+                    f"Pontuacao: {c}", 0, 100, 70, key=f"crit_{c}_{bid}"
+                )
+
+            if st.button("Registrar pontuacao"):
+                if lancar_pontuacao_rodada(bid, aluno_id, rodada_n, pontos_criterio):
+                    st.success("Pontuacao registrada!")
+                    st.rerun()
+                else:
+                    st.error("Erro ao registrar pontuacao.")
+
+        st.divider()
+        st.subheader("Ranking atual")
+        _mostrar_ranking(bid)
+
+        st.divider()
 
         if st.button("Finalizar esta batalha"):
             finalizar_batalha(bid)
             st.success("Batalha finalizada!")
             st.rerun()
+
+
+def _mostrar_ranking(batalha_id):
+    ranking = obter_ranking_batalha(batalha_id)
+    if not ranking:
+        st.info("Sem pontuacoes registradas ainda.")
+        return
+    for i, r in enumerate(ranking):
+        pos = ["1o", "2o", "3o"][i] if i < 3 else f"{i+1}o"
+        st.metric(f"{pos} - {r['nome']}", f"{r['pontuacao_total']} pts")
 
 
 def tela_batalha_respostas():
@@ -124,7 +191,7 @@ def tela_batalha_respostas():
             encontrou = True
             with st.container(border=True):
                 status = "Finalizada" if b.get("finalizada") else "Em aberto"
-                st.markdown(f"**{b.get('titulo')}** — {status}")
+                st.markdown(f"**{b.get('titulo')}** - {status}")
                 st.write(minha.get("conteudo", ""))
                 st.caption(str(minha.get("criado_em", "")))
 
