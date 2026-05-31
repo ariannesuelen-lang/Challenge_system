@@ -1,11 +1,11 @@
 # 📝 Sistema de Mini-Provas
 
-> API RESTful para gerenciamento de mini-provas educacionais com **FastAPI**, **SQLite** e **Firebase Firestore**.
+> API RESTful para gerenciamento de mini-provas educacionais com **FastAPI**, **Supabase**, **PostgreSQL** e **Python**.
 
 ![FastAPI](https://img.shields.io/badge/FastAPI-005571?style=flat&logo=fastapi)
 ![Python](https://img.shields.io/badge/Python-3.8+-blue?style=flat&logo=python)
-![SQLite](https://img.shields.io/badge/SQLite-003B57?style=flat&logo=sqlite)
-![Firebase](https://img.shields.io/badge/Firebase-FFCA28?style=flat&logo=firebase)
+![Postgres](https://img.shields.io/badge/Postgres-%23316192.svg?logo=postgresql&logoColor=white)
+![Supabase](https://img.shields.io/badge/Supabase-3FCF8E?logo=supabase&logoColor=fff)
 
 ---
 
