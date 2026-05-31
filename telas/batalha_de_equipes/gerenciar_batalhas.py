@@ -29,13 +29,51 @@ def tela_batalha_gerenciar():
 
         titulo    = st.text_input("Titulo da batalha")
         descricao = st.text_area("Descricao / objetivo")
-        prazo     = st.date_input("Prazo", value=None, min_value=date.today())
+
+        col1, col2 = st.columns(2)
+        with col1:
+            quantidade_rodadas = st.number_input("Numero de rodadas", min_value=1, step=1, value=3)
+        with col2:
+            tempo_por_rodada = st.number_input("Tempo por rodada (min)", min_value=1, step=1, value=30)
+
+        prazo = st.date_input("Prazo", value=None, min_value=date.today())
+
+        regras = st.text_area(
+            "Regras de conduta",
+            value="Siga as regras de Fair Play da instituicao."
+        )
+
+        st.markdown("**Criterios de avaliacao** (um por linha)")
+        criterios_raw = st.text_area(
+            "Criterios",
+            placeholder="Logica\nOrganizacao\nCriatividade"
+        )
+        criterios = [c.strip() for c in criterios_raw.splitlines() if c.strip()]
+
+        st.markdown("**Configuracoes de seguranca**")
+        col3, col4, col5 = st.columns(3)
+        with col3:
+            bloquear_copia   = st.checkbox("Bloquear copia", value=True)
+        with col4:
+            verificar_plagio = st.checkbox("Verificar plagio", value=True)
+        with col5:
+            limitar_ip       = st.checkbox("Limitar IP", value=False)
+
+        seguranca = {
+            "bloquear_copia":   bloquear_copia,
+            "verificar_plagio": verificar_plagio,
+            "limitar_IP":       limitar_ip
+        }
 
         if st.button("Criar batalha"):
             if not titulo.strip():
                 st.warning("O titulo e obrigatorio.")
             else:
-                if criar_batalha(titulo, descricao, user_id, prazo):
+                if criar_batalha(
+                    titulo, descricao, user_id,
+                    quantidade_rodadas, tempo_por_rodada,
+                    criterios, regras, seguranca, prazo
+                ):
                     st.success("Batalha criada com sucesso!")
                     st.rerun()
                 else:
@@ -64,10 +102,21 @@ def tela_batalha_gerenciar():
                 st.markdown(f"**{b.get('titulo')}**")
                 st.caption(
                     f"Status: {status_txt} | "
+                    f"Rodadas: {b.get('quantidade_rodadas', '-')} | "
                     f"Prazo: {b.get('prazo') or 'sem prazo'}"
                 )
                 if b.get("descricao"):
                     st.write(b["descricao"])
+
+                criterios_lista = b.get("criterios_avaliacao") or []
+                if criterios_lista:
+                    with st.expander("Criterios"):
+                        for c in criterios_lista:
+                            st.markdown(f"- {c}")
+
+                if b.get("regras_conduta"):
+                    with st.expander("Regras"):
+                        st.write(b["regras_conduta"])
 
             with col2:
                 if not finalizada:
