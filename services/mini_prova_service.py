@@ -129,6 +129,34 @@ def criar_pergunta(dados):
         }).execute()
 
 
+def criar_mini_prova(dados):
+
+    professor = buscar_professor_por_email(
+        dados["email_professor"]
+    )
+
+    disciplina = buscar_ou_criar_disciplina(
+        dados["disciplina"]
+    )
+
+    resposta = (
+        supabase
+        .table("mini_provas")
+        .insert({
+            "professor_id": professor["id"],
+            "disciplina_id": disciplina["id"],
+            "titulo": dados["titulo"],
+            "descricao": dados["assunto"],
+            "qtde_questoes": dados["quantidade_total"],
+            "duracao_minutos": dados["tempo_minutos"],
+            "status": "rascunho"
+        })
+        .execute()
+    )
+
+    return resposta.data
+
+
 def listar_mini_provas():
 
     resposta = (
