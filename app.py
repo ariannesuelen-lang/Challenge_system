@@ -68,7 +68,11 @@ elif pagina == "quiz_ao_vivo":
     tela_quiz_ao_vivo()
 
 elif pagina == "mini_provas":
-    if st.session_state.tipo_usuario == "professor":
+    if (
+    st.session_state.usuario_logado[
+        "tipo_usuario"
+    ] == "professor"
+):
         tela_mini_provas_professor()
     else:
         tela_mini_provas()
