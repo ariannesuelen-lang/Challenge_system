@@ -21,7 +21,7 @@ def tela_cadastro_perguntas():
         "Dificuldade",
         [
             "facil",
-            "media",
+            "intermediario",
             "dificil"
         ]
     )
@@ -67,11 +67,44 @@ def tela_cadastro_perguntas():
         "Cadastrar pergunta"
     ):
 
+        usuario = (
+            st.session_state.usuario_logado
+        )
+
         dados = {
 
-            "enunciado": pergunta,
+            "email_professor":
+            usuario["email"],
 
-            "nivel": dificuldade
+            "disciplina":
+            disciplina,
+
+            "assunto":
+            assunto,
+
+            "enunciado":
+            pergunta,
+
+            "nivel":
+            dificuldade,
+
+            "alternativa_a":
+            alternativa_a,
+
+            "alternativa_b":
+            alternativa_b,
+
+            "alternativa_c":
+            alternativa_c,
+
+            "alternativa_d":
+            alternativa_d,
+
+            "alternativa_e":
+            alternativa_e,
+
+            "resposta_correta":
+            resposta_correta
         }
 
         criar_pergunta(dados)
