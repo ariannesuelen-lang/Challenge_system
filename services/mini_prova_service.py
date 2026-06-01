@@ -3,6 +3,11 @@ from database.conexao import supabase
 
 def listar_mini_provas():
 
-    return supabase.table(
-        "mini_provas"
-    ).select("*").execute()
+    resposta = (
+        supabase
+        .table("mini_provas")
+        .select("*")
+        .execute()
+    )
+
+    return resposta.data
