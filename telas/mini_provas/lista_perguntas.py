@@ -7,7 +7,9 @@ from services.mini_prova_service import (
 
 def tela_lista_perguntas():
 
-    st.title("Perguntas cadastradas")
+    st.title(
+        "Perguntas cadastradas"
+    )
 
     perguntas = listar_perguntas()
 
@@ -31,18 +33,6 @@ def tela_lista_perguntas():
                     f"Dificuldade: {pergunta['nivel']}"
                 )
 
-                if pergunta["disciplinas"]:
-
-                    st.write(
-                        f"Disciplina: {pergunta['disciplinas']['nome']}"
-                    )
-
-                if pergunta["temas"]:
-
-                    st.write(
-                        f"Assunto: {pergunta['temas']['nome']}"
-                    )
-
                 col1, col2 = st.columns(2)
 
                 with col1:
@@ -52,7 +42,7 @@ def tela_lista_perguntas():
                         key=f"editar_{pergunta['id']}"
                     ):
 
-                        st.session_state.id_pergunta_edicao = (
+                        st.session_state.id_pergunta = (
                             pergunta["id"]
                         )
 
@@ -69,7 +59,7 @@ def tela_lista_perguntas():
                         key=f"excluir_{pergunta['id']}"
                     ):
 
-                        st.session_state.id_pergunta_exclusao = (
+                        st.session_state.id_pergunta = (
                             pergunta["id"]
                         )
 
