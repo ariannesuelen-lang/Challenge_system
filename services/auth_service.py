@@ -63,11 +63,34 @@ def cadastrar_usuario(
     if verificar.data:
         return "E-mail já cadastrado"
 
-    supabase.table("usuarios").insert({
-        "nome": nome,
-        "email": email,
-        "tipo_usuario": tipo_usuario,
-        "senha": criptografar_senha(senha)
-    }).execute()
+    resposta_usuario = (
+        supabase
+        .table("usuarios")
+        .insert({
+            "nome": nome,
+            "email": email,
+            "tipo_usuario": tipo_usuario,
+            "senha": criptografar_senha(senha)
+        })
+        .execute()
+    )
+
+    if tipo_usuario == "professor":
+
+        supabase.table(
+            "professores"
+        ).insert({
+            "nome": nome,
+            "email": email
+        }).execute()
+
+    elif tipo_usuario == "aluno":
+
+        supabase.table(
+            "alunos"
+        ).insert({
+            "nome": nome,
+            "email": email
+        }).execute()
 
     return "ok"
