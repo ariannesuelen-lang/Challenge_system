@@ -1,23 +1,10 @@
 import streamlit as st
+from services.mini_prova_service import listar_mini_provas
 
 
 def tela_mini_provas():
 
-    if st.session_state.alto_contraste:
-
-        st.markdown(
-            """
-            <style>
-
-            .stApp {
-                background-color: black;
-                color: white;
-            }
-
-            </style>
-            """,
-            unsafe_allow_html=True
-        )
+    usuario = st.session_state.usuario_logado
 
     st.title("Mini Provas")
 
@@ -70,13 +57,22 @@ def tela_mini_provas():
                 "Solicitar tempo extra"
             )
 
-            prova = st.selectbox(
-                "Mini prova",
-                [
-                    "Mini prova 1",
-                    "Mini prova 2"
-                ]
-            )
+            mini_provas = listar_mini_provas()
+
+            nomes = []
+
+            for prova in mini_provas:
+
+                nomes.append(
+                    prova["titulo"]
+                )
+
+            if nomes:
+
+                prova = st.selectbox(
+                    "Mini prova",
+                    nomes
+                )
 
             justificativa = st.text_area(
                 "Justificativa"
@@ -116,29 +112,48 @@ def tela_mini_provas():
 
             st.rerun()
 
-    for i in range(3):
+    mini_provas = listar_mini_provas()
+
+    if not mini_provas:
+
+        st.info(
+            "Nenhuma mini prova disponível"
+        )
+
+        return
+
+    for prova in mini_provas:
+
+        titulo = prova["titulo"]
+
+        if pesquisa.lower() not in titulo.lower():
+
+            continue
 
         with st.container(border=True):
 
             st.write(
-                f"Mini prova {i+1}"
+                titulo
             )
 
             st.write(
-                "Disciplina: Grafos aplicados a programação"
+                prova.get(
+                    "descricao",
+                    ""
+                )
             )
 
             st.write(
-                "5 perguntas"
-            )
-
-            st.write(
-                "Valor: 1 ponto"
+                f"Duração: {prova['duracao_minutos']} minutos"
             )
 
             if st.button(
-                f"Fazer prova {i}"
+                f"Fazer prova {prova['id']}"
             ):
+
+                st.session_state.id_mini_prova = (
+                    prova["id"]
+                )
 
                 st.session_state.pagina = (
                     "realizar_mini_prova"
