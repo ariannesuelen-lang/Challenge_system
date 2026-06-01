@@ -167,3 +167,106 @@ def listar_mini_provas():
     )
 
     return resposta.data
+
+def listar_perguntas():
+
+    resposta = (
+        supabase
+        .table("questoes")
+        .select("""
+            id,
+            enunciado,
+            nivel,
+            disciplinas(nome),
+            temas(nome)
+        """)
+        .execute()
+    )
+
+    return resposta.data
+
+
+def buscar_pergunta(id_pergunta):
+
+    resposta = (
+        supabase
+        .table("questoes")
+        .select("*")
+        .eq("id", id_pergunta)
+        .execute()
+    )
+
+    if resposta.data:
+        return resposta.data[0]
+
+    return None
+
+
+def atualizar_pergunta(
+    id_pergunta,
+    dados
+):
+
+    supabase.table(
+        "questoes"
+    ).update({
+        "enunciado": dados["enunciado"],
+        "nivel": dados["nivel"]
+    }).eq(
+        "id",
+        id_pergunta
+    ).execute()
+
+
+def excluir_pergunta(id_pergunta):
+
+    supabase.table(
+        "questoes"
+    ).delete().eq(
+        "id",
+        id_pergunta
+    ).execute()
+
+
+def buscar_mini_prova(id_mini_prova):
+
+    resposta = (
+        supabase
+        .table("mini_provas")
+        .select("*")
+        .eq("id", id_mini_prova)
+        .execute()
+    )
+
+    if resposta.data:
+        return resposta.data[0]
+
+    return None
+
+
+def atualizar_mini_prova(
+    id_mini_prova,
+    dados
+):
+
+    supabase.table(
+        "mini_provas"
+    ).update({
+        "titulo": dados["titulo"],
+        "descricao": dados["descricao"],
+        "qtde_questoes": dados["qtde_questoes"],
+        "duracao_minutos": dados["duracao_minutos"]
+    }).eq(
+        "id",
+        id_mini_prova
+    ).execute()
+
+
+def excluir_mini_prova(id_mini_prova):
+
+    supabase.table(
+        "mini_provas"
+    ).delete().eq(
+        "id",
+        id_mini_prova
+    ).execute()
