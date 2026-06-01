@@ -6,8 +6,6 @@ def tela_home():
     usuario = st.session_state.usuario_logado
     desafio = listar_desafios()
     
-    st.write(st.session_state.usuario_logado)
-    
     st.title(
         f"Bem-vindo(a), {usuario['nome']}"
     )
