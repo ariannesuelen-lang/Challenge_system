@@ -1,5 +1,5 @@
-import logging
 import json
+import logging
 from database.conexao import supabase
 
 logger = logging.getLogger(__name__)
@@ -22,6 +22,7 @@ def _execute(query):
 # --------------------------------------------------
 # TIMES
 # --------------------------------------------------
+
 
 def listar_times():
     res = _execute(supabase.table("times").select("*").order("id"))
@@ -53,6 +54,7 @@ def deletar_time(time_id):
 # MEMBROS
 # --------------------------------------------------
 
+
 def listar_membros_time(time_id):
     try:
         time_id = int(time_id)
@@ -66,18 +68,16 @@ def listar_membros_time(time_id):
     if not res:
         return []
     membros = []
-    for r in (res.data or []):
+    for r in res.data or []:
         if not isinstance(r, dict):
             continue
         u = r.get("usuarios")
         if not isinstance(u, dict):
             continue
         if u.get("id") and u.get("nome"):
-            membros.append({
-                "id":    u["id"],
-                "nome":  u["nome"],
-                "email": u.get("email", "")
-            })
+            membros.append(
+                {"id": u["id"], "nome": u["nome"], "email": u.get("email", "")}
+            )
     return membros
 
 
@@ -122,7 +122,9 @@ def definir_time_usuario(user_id, time_id):
         return False
     _execute(supabase.table("time_membros").delete().eq("usuario_id", user_id))
     res = _execute(
-        supabase.table("time_membros").insert({"time_id": time_id, "usuario_id": user_id})
+        supabase.table("time_membros").insert(
+            {"time_id": time_id, "usuario_id": user_id}
+        )
     )
     return res is not None
 
@@ -162,30 +164,43 @@ def mover_aluno(user_id, time_destino):
 # BATALHAS
 # --------------------------------------------------
 
+
 def listar_batalhas():
     res = _execute(supabase.table("batalhas").select("*").order("id"))
     return res.data if res else []
 
 
-def criar_batalha(titulo, descricao, criador_id, quantidade_rodadas=1,
-                  tempo_por_rodada=30, criterios=None, regras=None,
-                  seguranca=None, prazo=None):
-    config_seguranca = seguranca if isinstance(seguranca, dict) else {
-        "bloquear_copia":   True,
-        "verificar_plagio": True,
-        "limitar_IP":       False
-    }
+def criar_batalha(
+    titulo,
+    descricao,
+    criador_id,
+    quantidade_rodadas=1,
+    tempo_por_rodada=30,
+    criterios=None,
+    regras=None,
+    seguranca=None,
+    prazo=None,
+):
+    config_seguranca = (
+        seguranca
+        if isinstance(seguranca, dict)
+        else {"bloquear_copia": True, "verificar_plagio": True, "limitar_IP": False}
+    )
 
     payload = {
-        "titulo":                   titulo.strip(),
-        "descricao":                descricao.strip() if descricao else "",
-        "criador_id":               int(criador_id),
-        "finalizada":               False,
-        "quantidade_rodadas":       int(quantidade_rodadas),
+        "titulo": titulo.strip(),
+        "descricao": descricao.strip() if descricao else "",
+        "criador_id": int(criador_id),
+        "finalizada": False,
+        "quantidade_rodadas": int(quantidade_rodadas),
         "tempo_por_rodada_minutos": int(tempo_por_rodada),
-        "criterios_avaliacao":      criterios if isinstance(criterios, list) else [],
-        "regras_conduta":           regras.strip() if regras else "Siga as regras de Fair Play da instituicao.",
-        "configuracoes_seguranca":  config_seguranca
+        "criterios_avaliacao": criterios if isinstance(criterios, list) else [],
+        "regras_conduta": (
+            regras.strip()
+            if  regras
+            else "Siga as regras de Fair Play da instituição."
+        ),
+        "configuracoes_seguranca": config_seguranca,
     }
 
     if prazo:
@@ -213,9 +228,13 @@ def obter_batalha(batalha_id):
 
     batalha = res.data[0]
 
-    if "criterios_avaliacao" in batalha and isinstance(batalha["criterios_avaliacao"], str):
+    if "criterios_avaliacao" in batalha and isinstance(
+        batalha["criterios_avaliacao"], str
+    ):
         try:
-            batalha["criterios_avaliacao"] = json.loads(batalha["criterios_avaliacao"])
+            batalha["criterios_avaliacao"] = json.loads(
+                batalha["criterios_avaliacao"]
+            )
         except Exception:
             batalha["criterios_avaliacao"] = []
 
@@ -226,20 +245,25 @@ def obter_batalha(batalha_id):
 # RESPOSTAS DE BATALHA
 # --------------------------------------------------
 
+
 def enviar_resposta_batalha(batalha_id, user_id, conteudo):
     batalha = obter_batalha(batalha_id)
     if not batalha or batalha.get("finalizada"):
-        return False, "Esta batalha ja foi encerrada."
+        return False, "Esta batalha já foi encerrada."
 
-    if not conteudo or not conteudo.strip():
-        return False, "Conteudo nao pode ser vazio."
+    if not conteudo or not str(conteudo).strip():
+        return False, "Conteúdo não pode ser vazio."
 
-    res = _execute(supabase.table("respostas_batalha").insert({
-        "batalha_id": int(batalha_id),
-        "usuario_id": int(user_id),
-        "conteudo":   conteudo.strip(),
-    }))
-    return (res is not None), "Resposta enviada com sucesso."
+    res = _execute(
+        supabase.table("respostas_batalha").insert(
+            {
+                "batalha_id": int(batalha_id),
+                "usuario_id": int(user_id),
+                "conteudo": str(conteudo).strip(),
+            }
+        )
+    )
+    return res is not None, "Resposta enviada com sucesso."
 
 
 def listar_respostas_batalha(batalha_id):
@@ -264,23 +288,24 @@ def usuario_ja_respondeu(batalha_id, user_id):
 
 
 # --------------------------------------------------
-# PONTUACAO E RANKING
+# PONTUAÇÃO E RANKING
 # --------------------------------------------------
+
 
 def lancar_pontuacao_rodada(batalha_id, usuario_id, rodada, pontos_por_criterio):
     if not isinstance(pontos_por_criterio, dict):
         return False
 
-    total_pontos  = sum(pontos_por_criterio.values())
+    total_pontos = sum(pontos_por_criterio.values())
     qtd_criterios = len(pontos_por_criterio)
-    nota_rodada   = int(total_pontos / qtd_criterios) if qtd_criterios > 0 else 0
+    nota_rodada = int(total_pontos / qtd_criterios) if qtd_criterios > 0 else 0
 
     payload = {
-        "batalha_id":       int(batalha_id),
-        "usuario_id":       int(usuario_id),
-        "rodada":           int(rodada),
+        "batalha_id": int(batalha_id),
+        "usuario_id": int(usuario_id),
+        "rodada": int(rodada),
         "pontos_criterios": pontos_por_criterio,
-        "pontuacao_rodada": nota_rodada
+        "pontuacao_rodada": nota_rodada,
     }
 
     res = _execute(supabase.table("pontuacoes").insert(payload))
@@ -294,8 +319,10 @@ def calcular_pontuacao_total_aluno(batalha_id, usuario_id):
         .eq("batalha_id", int(batalha_id))
         .eq("usuario_id", int(usuario_id))
     )
+
     if not res or not res.data:
         return 0
+
     return sum(row.get("pontuacao_rodada", 0) for row in res.data)
 
 
@@ -305,15 +332,16 @@ def obter_ranking_batalha(batalha_id):
         .select("usuario_id, pontuacao_rodada, usuarios(nome)")
         .eq("batalha_id", int(batalha_id))
     )
+
     if not res or not res.data:
         return []
 
     ranking_dict = {}
     for row in res.data:
-        user_id      = row.get("usuario_id")
-        user_info    = row.get("usuarios") or {}
-        nome_usuario = user_info.get("nome", "Usuario Desconhecido")
-        pontos       = row.get("pontuacao_rodada", 0)
+        user_id = row.get("usuario_id")
+        user_info = row.get("usuarios") or {}
+        nome_usuario = user_info.get("nome", "Usuário Desconhecido")
+        pontos = row.get("pontuacao_rodada", 0)
 
         if user_id not in ranking_dict:
             ranking_dict[user_id] = {"nome": nome_usuario, "pontuacao_total": 0}
@@ -324,3 +352,64 @@ def obter_ranking_batalha(batalha_id):
     lista_ranking.sort(key=lambda x: x["pontuacao_total"], reverse=True)
 
     return lista_ranking
+
+
+# --------------------------------------------------
+# MODERAÇÃO E CONTROLE (MODO MODERADOR)
+# --------------------------------------------------
+
+
+def alterar_status_batalha(batalha_id, novo_status):
+    if novo_status not in ["ativa", "pausada", "finalizada"]:
+        return False
+
+    payload = {"status": novo_status}
+    if novo_status == "finalizada":
+        payload["finalizada"] = True
+    elif novo_status == "ativa":
+        payload["finalizada"] = False
+
+    res = _execute(
+        supabase.table("batalhas")
+        .update(payload)
+        .eq("id", int(batalha_id))
+    )
+    return res is not None
+
+
+def aplicar_penalidade_aluno(batalha_id, usuario_id, pontos_deduzidos, motivo):
+    batalha = obter_batalha(batalha_id)
+    if not batalha:
+        return False
+
+    historico_penalidades = batalha.get("penalidades") or []
+    if isinstance(historico_penalidades, str):
+        try:
+            historico_penalidades = json.loads(historico_penalidades)
+        except Exception:
+            historico_penalidades = []
+
+    nova_penalidade = {
+        "usuario_id": int(usuario_id),
+        "pontos_deduzidos": int(pontos_deduzidos),
+        "motivo": motivo.strip() if motivo else "Sem motivo especificado",
+        "timestamp": "now()", 
+    }
+    historico_penalidades.append(nova_penalidade)
+
+    _execute(
+        supabase.table("batalhas")
+        .update({"penalidades": historico_penalidades})
+        .eq("id", int(batalha_id))
+    )
+
+    payload_ponto = {
+        "batalha_id": int(batalha_id),
+        "usuario_id": int(usuario_id),
+        "rodada": 99,
+        "pontos_criterios": {"Penalidade": -int(pontos_deduzidos)},
+        "pontuacao_rodada": -int(pontos_deduzidos),
+    }
+
+    res = _execute(supabase.table("pontuacoes").insert(payload_ponto))
+    return res is not None
