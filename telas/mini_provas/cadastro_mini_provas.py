@@ -9,49 +9,57 @@ def tela_cadastro_mini_provas():
 
     st.title("Cadastro de Mini Provas")
 
-    titulo = st.text_input("Título")
+    titulo = st.text_input(
+        "Título"
+    )
 
-    disciplina = st.text_input("Disciplina")
+    disciplina = st.text_input(
+        "Disciplina"
+    )
 
-    assunto = st.text_input("Assunto")
+    assunto = st.text_input(
+        "Assunto"
+    )
 
     quantidade_total = st.number_input(
-        "Quantidade total de perguntas",
+        "Quantidade total",
         min_value=1,
         step=1
     )
 
     quantidade_faceis = st.number_input(
-        "Perguntas fáceis",
+        "Questões fáceis",
         min_value=0,
         step=1
     )
 
     quantidade_medias = st.number_input(
-        "Perguntas médias",
+        "Questões intermediárias",
         min_value=0,
         step=1
     )
 
     quantidade_dificeis = st.number_input(
-        "Perguntas difíceis",
+        "Questões difíceis",
         min_value=0,
         step=1
     )
 
     tempo_minutos = st.number_input(
-        "Tempo da prova (minutos)",
+        "Tempo (minutos)",
         min_value=1,
         step=1
     )
 
     pontos = st.number_input(
-        "Pontuação da mini prova",
+        "Pontuação",
         min_value=0.1,
         step=0.1
     )
 
-    if st.button("Criar Mini Prova"):
+    if st.button(
+        "Criar Mini Prova"
+    ):
 
         soma = (
             quantidade_faceis +
@@ -62,38 +70,60 @@ def tela_cadastro_mini_provas():
         if soma != quantidade_total:
 
             st.error(
-                "A soma das dificuldades deve ser igual ao total de perguntas"
+                "A soma das dificuldades deve ser igual ao total"
             )
 
             return
 
+        usuario = (
+            st.session_state.usuario_logado
+        )
+
         dados = {
 
-            "titulo": titulo,
+            "email_professor":
+            usuario["email"],
 
-            "descricao": assunto,
+            "titulo":
+            titulo,
 
-            "qtde_questoes": quantidade_total,
+            "disciplina":
+            disciplina,
 
-            "duracao_minutos": tempo_minutos,
+            "assunto":
+            assunto,
 
-            "max_tentativas": 1,
+            "quantidade_total":
+            quantidade_total,
 
-            "randomizar_questoes": True,
+            "quantidade_faceis":
+            quantidade_faceis,
 
-            "randomizar_alternativas": True
+            "quantidade_medias":
+            quantidade_medias,
+
+            "quantidade_dificeis":
+            quantidade_dificeis,
+
+            "tempo_minutos":
+            tempo_minutos,
+
+            "pontos":
+            pontos
         }
 
         criar_mini_prova(dados)
 
         st.success(
-            "Mini prova criada com sucesso"
+            "Mini prova criada"
         )
 
     st.divider()
 
     if st.button("Voltar"):
 
-        st.session_state.pagina = "mini_provas"
+        st.session_state.pagina = (
+            "mini_provas"
+        )
 
         st.rerun()
