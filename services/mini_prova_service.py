@@ -173,13 +173,7 @@ def listar_perguntas():
     resposta = (
         supabase
         .table("questoes")
-        .select("""
-            id,
-            enunciado,
-            nivel,
-            disciplinas(nome),
-            temas(nome)
-        """)
+        .select("*")
         .execute()
     )
 
