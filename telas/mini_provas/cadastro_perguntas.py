@@ -1,5 +1,9 @@
 import streamlit as st
 
+from services.mini_prova_service import (
+    criar_pergunta
+)
+
 
 def tela_cadastro_perguntas():
 
@@ -63,8 +67,17 @@ def tela_cadastro_perguntas():
         "Cadastrar pergunta"
     ):
 
+        dados = {
+
+            "enunciado": pergunta,
+
+            "nivel": dificuldade
+        }
+
+        criar_pergunta(dados)
+
         st.success(
-            "Pergunta cadastrada visualmente"
+            "Pergunta cadastrada"
         )
 
     st.divider()
