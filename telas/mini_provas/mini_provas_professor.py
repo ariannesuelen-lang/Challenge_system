@@ -1,10 +1,11 @@
 import streamlit as st
+from services.mini_prova_service import listar_mini_provas
 
 
 def tela_mini_provas_professor():
 
     st.title(
-        "Painel do Professor"
+        "Painel de Mini Provas"
     )
 
     col1, col2, col3 = st.columns(3)
@@ -51,20 +52,33 @@ def tela_mini_provas_professor():
         "Mini Provas Criadas"
     )
 
-    for i in range(3):
+    mini_provas = listar_mini_provas()
+
+    if not mini_provas:
+
+        st.info(
+            "Nenhuma mini prova cadastrada"
+        )
+
+        return
+
+    for prova in mini_provas:
 
         with st.container(border=True):
 
             st.write(
-                f"Mini prova {i+1}"
+                prova["titulo"]
             )
 
             st.write(
-                "Disciplina: Matemática"
+                prova.get(
+                    "descricao",
+                    ""
+                )
             )
 
             st.write(
-                "5 perguntas"
+                f"Duração: {prova['duracao_minutos']} minutos"
             )
 
             col1, col2 = st.columns(2)
@@ -72,11 +86,13 @@ def tela_mini_provas_professor():
             with col1:
 
                 st.button(
-                    f"Editar {i}"
+                    "Editar",
+                    key=f"editar_{prova['id']}"
                 )
 
             with col2:
 
                 st.button(
-                    f"Visualizar {i}"
+                    "Visualizar",
+                    key=f"visualizar_{prova['id']}"
                 )
