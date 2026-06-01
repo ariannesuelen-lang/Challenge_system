@@ -22,6 +22,7 @@ from telas.mini_provas.cadastro_perguntas import tela_cadastro_perguntas
 from telas.mini_provas.cadastro_mini_provas import tela_cadastro_mini_provas
 from telas.mini_provas.notificacoes_mini_provas import tela_notificacoes_mini_provas
 from telas.mini_provas.solicitacoes_reabertura import tela_solicitacoes_reabertura
+from telas.mini_provas.lista_perguntas import tela_lista_perguntas
 
 from telas.batalha_de_equipes.batalha_de_equipes import tela_batalha_de_equipes
 from telas.batalha_de_equipes.times import tela_batalha_times
@@ -94,6 +95,9 @@ elif pagina == "cadastro_mini_provas":
 
 elif pagina == "solicitacoes_reabertura":
     tela_solicitacoes_reabertura()
+
+elif pagina == "lista_perguntas":
+    tela_lista_perguntas()
 
 elif pagina == "batalha_de_equipes":
     tela_batalha_de_equipes()
