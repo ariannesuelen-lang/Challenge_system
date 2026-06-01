@@ -3,11 +3,13 @@ import re
 
 from database.conexao import supabase
 
+
 def criptografar_senha(senha):
 
     return hashlib.sha256(
         senha.encode()
     ).hexdigest()
+
 
 def senha_valida(senha):
 
@@ -47,50 +49,53 @@ def cadastrar_usuario(
     senha
 ):
 
-    validar = senha_valida(senha)
+    try:
 
-    if validar != "ok":
-        return validar
+        validar = senha_valida(senha)
 
-    verificar = (
-        supabase
-        .table("usuarios")
-        .select("id")
-        .eq("email", email)
-        .execute()
-    )
+        if validar != "ok":
+            return validar
 
-    if verificar.data:
-        return "E-mail já cadastrado"
+        verificar = (
+            supabase
+            .table("usuarios")
+            .select("id")
+            .eq("email", email)
+            .execute()
+        )
 
-    resposta_usuario = (
-        supabase
-        .table("usuarios")
-        .insert({
+        if verificar.data:
+            return "E-mail já cadastrado"
+
+        supabase.table(
+            "usuarios"
+        ).insert({
             "nome": nome,
             "email": email,
             "tipo_usuario": tipo_usuario,
             "senha": criptografar_senha(senha)
-        })
-        .execute()
-    )
-
-    if tipo_usuario == "professor":
-
-        supabase.table(
-            "professores"
-        ).insert({
-            "nome": nome,
-            "email": email
         }).execute()
 
-    elif tipo_usuario == "aluno":
+        if tipo_usuario == "professor":
 
-        supabase.table(
-            "alunos"
-        ).insert({
-            "nome": nome,
-            "email": email
-        }).execute()
+            supabase.table(
+                "professores"
+            ).insert({
+                "nome": nome,
+                "email": email
+            }).execute()
 
-    return "ok"
+        elif tipo_usuario == "aluno":
+
+            supabase.table(
+                "alunos"
+            ).insert({
+                "nome": nome,
+                "email": email
+            }).execute()
+
+        return "ok"
+
+    except Exception as erro:
+
+        return f"Erro ao cadastrar usuário: {erro}"
