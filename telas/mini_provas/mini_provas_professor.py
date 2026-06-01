@@ -1,11 +1,14 @@
 import streamlit as st
-from services.mini_prova_service import listar_mini_provas
+
+from services.mini_prova_service import (
+    listar_mini_provas
+)
 
 
 def tela_mini_provas_professor():
 
     st.title(
-        "Painel de Mini Provas"
+        "Painel do Professor"
     )
 
     col1, col2, col3 = st.columns(3)
@@ -37,11 +40,11 @@ def tela_mini_provas_professor():
     with col3:
 
         if st.button(
-            "Solicitações"
+            "Ver Perguntas"
         ):
 
             st.session_state.pagina = (
-                "solicitacoes_reabertura"
+                "lista_perguntas"
             )
 
             st.rerun()
@@ -60,39 +63,56 @@ def tela_mini_provas_professor():
             "Nenhuma mini prova cadastrada"
         )
 
-        return
+    else:
 
-    for prova in mini_provas:
+        for prova in mini_provas:
 
-        with st.container(border=True):
+            with st.container(border=True):
 
-            st.write(
-                prova["titulo"]
-            )
-
-            st.write(
-                prova.get(
-                    "descricao",
-                    ""
-                )
-            )
-
-            st.write(
-                f"Duração: {prova['duracao_minutos']} minutos"
-            )
-
-            col1, col2 = st.columns(2)
-
-            with col1:
-
-                st.button(
-                    "Editar",
-                    key=f"editar_{prova['id']}"
+                st.write(
+                    prova["titulo"]
                 )
 
-            with col2:
-
-                st.button(
-                    "Visualizar",
-                    key=f"visualizar_{prova['id']}"
+                st.write(
+                    prova["descricao"]
                 )
+
+                st.write(
+                    f"{prova['qtde_questoes']} questões"
+                )
+
+                col1, col2 = st.columns(2)
+
+                with col1:
+
+                    if st.button(
+                        "Editar",
+                        key=f"editar_{prova['id']}"
+                    ):
+
+                        st.session_state.id_mini_prova = (
+                            prova["id"]
+                        )
+
+                        st.session_state.pagina = (
+                            "editar_mini_prova"
+                        )
+
+                        st.rerun()
+
+                with col2:
+
+                    if st.button(
+                        "Visualizar",
+                        key=f"visualizar_{prova['id']}"
+                    ):
+
+                        st.session_state.id_mini_prova = (
+                            prova["id"]
+                        )
+
+                        st.session_state.pagina = (
+                            "visualizar_mini_prova"
+                        )
+
+                        st.rerun()
