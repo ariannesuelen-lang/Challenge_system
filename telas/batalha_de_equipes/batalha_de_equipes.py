@@ -1,57 +1,79 @@
 import streamlit as st
 
+from telas.batalha_de_equipes.times        import tela_batalha_times
+from telas.batalha_de_equipes.integrantes  import tela_batalha_integrantes
+from telas.batalha_de_equipes.regras       import tela_batalha_regras
+from telas.batalha_de_equipes.rodada       import tela_batalha_rodada, tela_batalha_respostas
+from telas.batalha_de_equipes.gerenciar_batalhas import tela_batalha_gerenciar
+
 
 def tela_batalha_de_equipes():
 
     usuario = st.session_state.usuario_logado
-    tipo = usuario.get("tipo_usuario", "aluno")
+    tipo    = usuario.get("tipo_usuario", "aluno")
 
     st.title("Batalha de Equipes")
     st.divider()
 
-    col1, col2, col3 = st.columns(3)
+    # ── Abas de acordo com o perfil ──────────────────────────────────────────
+    if tipo == "professor":
+        abas = st.tabs([
+            "⚔️  Times",
+            "👥  Integrantes",
+            "📋  Regras",
+            "🏟️  Batalhas em Andamento",
+            "⚙️  Gerenciar Batalhas",
+        ])
+        tab_times, tab_integrantes, tab_regras, tab_rodada, tab_gerenciar = abas
+    else:
+        abas = st.tabs([
+            "⚔️  Times",
+            "👥  Integrantes",
+            "📋  Regras",
+            "🏟️  Batalhas Abertas",
+            "📝  Minhas Respostas",
+        ])
+        tab_times, tab_integrantes, tab_regras, tab_rodada, tab_respostas = abas
 
-    with col1:
-        if st.button("Times", use_container_width=True):
-            st.session_state.pagina = "batalha_times"
-            st.rerun()
+    # ── Conteúdo de cada aba ─────────────────────────────────────────────────
+    with tab_times:
+        _render_sem_voltar(tela_batalha_times)
 
-    with col2:
-        if st.button("Integrantes", use_container_width=True):
-            st.session_state.pagina = "batalha_integrantes"
-            st.rerun()
+    with tab_integrantes:
+        _render_sem_voltar(tela_batalha_integrantes)
 
-    with col3:
-        if st.button("Regras", use_container_width=True):
-            st.session_state.pagina = "batalha_regras"
-            st.rerun()
+    with tab_regras:
+        _render_sem_voltar(tela_batalha_regras)
 
-    st.divider()
+    with tab_rodada:
+        _render_sem_voltar(tela_batalha_rodada)
 
     if tipo == "professor":
-
-        col4, col5 = st.columns(2)
-
-        with col4:
-            if st.button("Gerenciar Batalhas", use_container_width=True):
-                st.session_state.pagina = "batalha_gerenciar"
-                st.rerun()
-
-        with col5:
-            if st.button("Batalhas em Andamento", use_container_width=True):
-                st.session_state.pagina = "batalha_rodada"
-                st.rerun()
-
+        with tab_gerenciar:
+            _render_sem_voltar(tela_batalha_gerenciar)
     else:
+        with tab_respostas:
+            _render_sem_voltar(tela_batalha_respostas)
 
-        col4, col5 = st.columns(2)
+def _render_sem_voltar(fn):
+    """Executa fn() pulando o primeiro botão 'Voltar' que ela renderizar."""
 
-        with col4:
-            if st.button("Batalhas Abertas", use_container_width=True):
-                st.session_state.pagina = "batalha_rodada"
-                st.rerun()
+    original_button = st.button
+    _chamadas = {"n": 0}
 
-        with col5:
-            if st.button("Minhas Respostas", use_container_width=True):
-                st.session_state.pagina = "batalha_respostas"
-                st.rerun()
+    def botao_filtrado(label, *args, **kwargs):
+        if label == "Voltar" and _chamadas["n"] == 0:
+            _chamadas["n"] += 1
+            # renderiza mas invisível via CSS (não gera clique)
+            st.markdown(
+                "<style>.btn-voltar-oculto{display:none}</style>",
+                unsafe_allow_html=True,
+            )
+            return False          # nunca clicado
+        return original_button(label, *args, **kwargs)
+
+    st.button = botao_filtrado
+    try:
+        fn()
+    finally:
+        st.button = original_button
