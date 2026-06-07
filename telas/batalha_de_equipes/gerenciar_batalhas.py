@@ -69,7 +69,15 @@ def tela_batalha_gerenciar():
             if not titulo.strip():
                 st.warning("O titulo e obrigatorio.")
             else:
-                if criar_batalha(
+                batalhas_existentes = listar_batalhas()
+                titulos_existentes = [
+                    b.get("titulo", "").strip().lower()
+                    for b in batalhas_existentes
+                    if isinstance(b, dict)
+                ]
+                if titulo.strip().lower() in titulos_existentes:
+                    st.error(f"Ja existe uma batalha com o titulo '{titulo.strip()}'.")
+                elif criar_batalha(
                     titulo, descricao, user_id,
                     quantidade_rodadas, tempo_por_rodada,
                     criterios, regras, seguranca, prazo
