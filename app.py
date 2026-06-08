@@ -8,7 +8,7 @@ from telas.cadastro import tela_cadastro
 from telas.home import tela_home
 
 # Importacao direta usando o nome exato do arquivo no seu GitHub
-from telas.Quiz_Ao_Vivo import tela_quiz_ao_vivo
+from telas.quiz_ao_vivo import tela_quiz_ao_vivo
 
 from telas.votacao import tela_votacao
 from telas.voto import tela_voto
