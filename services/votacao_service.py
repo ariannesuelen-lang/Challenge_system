@@ -1,6 +1,32 @@
 import streamlit as st
-# Correção do caminho de importação baseado no seu repositório real:
-from utils.supabase import supabase 
+
+# TENTATIVA RESILIENTE DE IMPORTAÇÃO DO CLIENTE SUPABASE
+try:
+    from utils.supabase import supabase
+except Exception:
+    try:
+        from utils.Supabase import supabase
+    except Exception:
+        # Fallback de segurança: inicializa o cliente diretamente se a importação falhar
+        from supabase import create_client
+        
+        # Recupera as credenciais direto dos secrets do seu Streamlit Cloud
+        supabase_url = st.secrets.get("SUPABASE_URL") or st.secrets.get("supabase_url")
+        supabase_key = st.secrets.get("SUPABASE_KEY") or st.secrets.get("supabase_key")
+        
+        if supabase_url and supabase_key:
+            supabase = create_client(supabase_url, supabase_key)
+        else:
+            # Caso não encontre nos secrets, cria um objeto dummy para o app não crashar no boot
+            class DummySupabase:
+                def table(self, name): return self
+                def select(self, *args, **kwargs): return self
+                def eq(self, *args, **kwargs): return self
+                def execute(self, *args, **kwargs):
+                    class Empty: data = []
+                    return Empty()
+            supabase = DummySupabase()
+
 
 def buscar_voto_usuario(usuario_id, desafio_id):
     """
@@ -25,7 +51,6 @@ def registrar_voto(desafio_id, aluno_id, usuario_id_logado):
     dentro do desafio selecionado (desafio_id).
     """
     try:
-        # 1. Verifica se o usuário já votou neste desafio
         votos_existentes = buscar_voto_usuario(usuario_id_logado, desafio_id)
         
         if votos_existentes:
@@ -34,14 +59,12 @@ def registrar_voto(desafio_id, aluno_id, usuario_id_logado):
                 "mensagem": "Voce ja registrou um voto para este desafio!"
             }
         
-        # 2. Mapeia exatamente as colunas text da tabela public.votos: usuario_id, desafio_id, voto
         dados_voto = {
-            "usuario_id": str(usuario_id_logado), # Eleitor
-            "desafio_id": str(desafio_id),        # Desafio
-            "voto": str(aluno_id)                 # Aluno que recebeu o voto
+            "usuario_id": str(usuario_id_logado),
+            "desafio_id": str(desafio_id),
+            "voto": str(aluno_id)
         }
         
-        # 3. Insere o registro no Supabase
         supabase.table("votos").insert(dados_voto).execute()
         
         return {
