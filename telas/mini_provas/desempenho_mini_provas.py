@@ -21,5 +21,9 @@ def tela_desempenho_mini_provas():
     st.divider()
 
     if st.button("Voltar"):
+
+        st.switch_page(
+            "telas/mini_provas/mini_provas.py"
+        )
         st.session_state.pagina = "mini_provas"
         st.rerun()
