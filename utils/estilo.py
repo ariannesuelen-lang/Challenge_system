@@ -28,7 +28,7 @@ def aplicar_estilo():
         [data-testid="stSidebar"] span,
         [data-testid="stSidebar"] label,
         [data-testid="stSidebar"] div {
-            color: #ffffff !important;
+            color: #0d1b2a !important;
         }
 
         /* ----- TITULOS NO CONTEUDO PRINCIPAL ----- */
