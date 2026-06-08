@@ -3,8 +3,8 @@ from utils.supabase import supabase
 
 def listar_desafios():
     """
-    Retorna a lista de todos os desafios cadastrados no banco de dados.
-    Corrigido para usar a coluna real 'criado_em' em vez de 'data_criacao'.
+    Retorna a lista de todos os desafios cadastrados.
+    Usa a coluna correta 'criado_em' mapeada do PostgreSQL.
     """
     try:
         resultado = supabase.table("desafios") \
@@ -13,7 +13,7 @@ def listar_desafios():
             .execute()
         return resultado.data
     except Exception as e:
-        # Se a ordenacao falhar por algum motivo, tenta uma busca simples sem order
+        # Fallback caso o cache do cache do PostgREST reclame da ordenação
         try:
             resultado = supabase.table("desafios").select("*").execute()
             return resultado.data
@@ -21,10 +21,9 @@ def listar_desafios():
             print(f"Erro critico ao listar desafios: {erro_critico}")
             return []
 
-
 def criar_desafio(titulo, descricao, criador_id, data_limite=None, nivel_dificuldade="Médio"):
     """
-    Cria um novo desafio respeitando as colunas exatas da tabela public.desafios.
+    Insere um novo desafio respeitando o esquema oficial do banco.
     """
     try:
         dados = {
@@ -33,11 +32,10 @@ def criar_desafio(titulo, descricao, criador_id, data_limite=None, nivel_dificul
             "criador_id": int(criador_id),
             "nivel_dificuldade": str(nivel_dificuldade)
         }
-        
         if data_limite:
             dados["data_limite"] = str(data_limite)
             
         resultado = supabase.table("desafios").insert(dados).execute()
         return {"sucesso": True, "dados": resultado.data}
     except Exception as e:
-        return {"sucesso": False, "mensagem": f"Erro ao inserir desafio: {str(e)}"}
+        return {"sucesso": False, "mensagem": f"Erro ao criar desafio: {str(e)}"}
