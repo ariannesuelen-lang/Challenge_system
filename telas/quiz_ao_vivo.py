@@ -103,6 +103,7 @@ def tela_quiz_ao_vivo():
 
         with col_proxima:
             if st.button("Proxima Pergunta", width="stretch"):
+                # Parêntese corrigido e fechado corretamente aqui:
                 resultado = avancar_pergunta(
                     quiz_id_controle,
                     usuario.get("id"),
@@ -211,4 +212,46 @@ def tela_quiz_ao_vivo():
                 indice_resposta = alternativas.index(escolha)
 
                 retorno = responder_pergunta(
-                    participacao_id
+                    participacao_id,
+                    pergunta["id"],
+                    indice_resposta,
+                )
+
+                if retorno["sucesso"]:
+                    st.success(retorno["dados"]["feedback"])
+                    st.info(
+                        f"Sua pontuacao: "
+                        f"{retorno['dados']['pontuacao']} pontos"
+                    )
+                else:
+                    st.error(retorno["mensagem"])
+
+        st.divider()
+
+    quiz_ranking = st.number_input(
+        "Quiz Ranking",
+        min_value=1,
+        key="ranking",
+    )
+
+    if st.button("Ver Ranking", width="stretch"):
+        _mostrar_ranking(quiz_ranking)
+
+
+def _mostrar_ranking(quiz_id):
+    resultado = obter_ranking(quiz_id)
+
+    if resultado["sucesso"]:
+        st.subheader("Ranking")
+
+        for posicao, jogador in enumerate(resultado["dados"], start=1):
+            usuario_dados = jogador.get("usuarios") or {}
+            nome = usuario_dados.get("nome", "Aluno")
+
+            st.write(
+                f"**{posicao} lugar** - "
+                f"{nome} - "
+                f"{jogador['pontuacao']} pontos"
+            )
+    else:
+        st.error(resultado["mensagem"])
