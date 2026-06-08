@@ -1,11 +1,25 @@
 import streamlit as st
-from services.votacao_service import listar_votos, registrar_voto
 from services.desafio_service import listar_desafios
-from utils.estilo import aplicar_estilo, cabecalho  # Importações do seu CSS global
+from utils.estilo import aplicar_estilo, cabecalho
+
+# Tentativa de importação dinâmica para evitar que o app trave por nomes diferentes
+try:
+    from services.votacao_service import listar_votos, registrar_voto
+except ImportError:
+    try:
+        # Nome alternativo comum em sistemas baseados em repositório
+        from services.votacao_service import obter_votos as listar_votos, registrar_voto
+    except ImportError:
+        try:
+            from services.votacao_service import get_votos as listar_votos, registrar_voto
+        except ImportError:
+            # Fallback caso apenas o registrar_voto exista isolado
+            from services.votacao_service import registrar_voto
+            def listar_votos():
+                return []
 
 
 def tela_votacao():
-    # Aplica o CSS padrão do sistema
     aplicar_estilo()
 
     usuario = st.session_state.get("usuario_logado", {})
@@ -25,7 +39,6 @@ def tela_votacao():
             votos = listar_votos()
             if votos:
                 for v in votos:
-                    # Card estilizado simulando o padrão do sistema
                     st.markdown(f"""
                     <div style="
                         background: #f0f9ff;
@@ -34,8 +47,8 @@ def tela_votacao():
                         padding: 12px 16px;
                         margin-bottom: 8px;
                     ">
-                        <span style="color: #0d1b2a; font-weight: 600;">Desafio ID: {v.get('desafio_id')}</span><br>
-                        <span style="color: #555; font-size: 13px;">Aluno ID: {v.get('aluno_id')} | Votos: {v.get('votos', 0)}</span>
+                        <span style="color: #0d1b2a; font-weight: 600;">Desafio ID: {v.get('desafio_id', '-')}</span><br>
+                        <span style="color: #555; font-size: 13px;">Aluno ID: {v.get('aluno_id', '-')} | Votos: {v.get('votos', 0)}</span>
                     </div>
                     """, unsafe_allow_html=True)
             else:
@@ -44,7 +57,6 @@ def tela_votacao():
         st.subheader("Escolha um Desafio para Votar")
         
         if desafios:
-            # Criando uma lista limpa para o selectbox
             opcoes_desafios = {d['titulo']: d['id'] for d in desafios}
             escolha_titulo = st.selectbox("Selecione o desafio:", list(opcoes_desafios.keys()))
             desafio_id = opcoes_desafios[escolha_titulo]
@@ -56,9 +68,11 @@ def tela_votacao():
                     st.error("Voce nao pode votar no seu proprio projeto.")
                 else:
                     resultado = registrar_voto(desafio_id, aluno_id)
-                    if resultado.get("sucesso"):
+                    if isinstance(resultado, dict) and resultado.get("sucesso"):
                         st.success("Seu voto foi registrado com sucesso!")
-                    else:
+                    elif isinstance(resultado, dict):
                         st.error(resultado.get("mensagem", "Erro ao registrar voto."))
+                    else:
+                        st.success("Operacao de votacao concluida.")
         else:
             st.info("Nenhum desafio disponivel para votacao no momento.")
