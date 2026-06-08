@@ -3,9 +3,12 @@ from datetime import date
 from services.batalha_de_equipes_service import (
     listar_batalhas, criar_batalha, finalizar_batalha
 )
+from utils.estilo import aplicar_estilo, cabecalho
 
 
 def tela_batalha_gerenciar():
+
+    aplicar_estilo()
 
     usuario = st.session_state.usuario_logado
     tipo    = usuario.get("tipo_usuario", "aluno")
@@ -15,20 +18,19 @@ def tela_batalha_gerenciar():
         st.error("Acesso restrito a professores.")
         return
 
-    st.title("Gerenciar Batalhas")
+    cabecalho("Gerenciar Batalhas", "Crie e controle as batalhas de equipes")
 
     if st.button("Voltar"):
         st.session_state.pagina = "batalha_de_equipes"
         st.rerun()
 
     st.divider()
-
-    st.subheader("Nova Batalha")
+    st.markdown("### Nova Batalha")
 
     with st.container(border=True):
 
-        titulo    = st.text_input("Titulo da batalha")
-        descricao = st.text_area("Descricao / objetivo")
+        titulo    = st.text_input("Titulo da batalha", placeholder="Ex: Batalha de Algoritmos")
+        descricao = st.text_area("Descricao / objetivo", placeholder="Descreva o objetivo da batalha")
 
         col1, col2 = st.columns(2)
         with col1:
@@ -50,14 +52,14 @@ def tela_batalha_gerenciar():
         )
         criterios = [c.strip() for c in criterios_raw.splitlines() if c.strip()]
 
-        st.markdown("**Configuracoes de seguranca**")
-        col3, col4, col5 = st.columns(3)
-        with col3:
-            bloquear_copia   = st.checkbox("Bloquear copia", value=True)
-        with col4:
-            verificar_plagio = st.checkbox("Verificar plagio", value=True)
-        with col5:
-            limitar_ip       = st.checkbox("Limitar IP", value=False)
+        with st.expander("Configuracoes de seguranca", expanded=False):
+            col3, col4, col5 = st.columns(3)
+            with col3:
+                bloquear_copia   = st.checkbox("Bloquear copia", value=True)
+            with col4:
+                verificar_plagio = st.checkbox("Verificar plagio", value=True)
+            with col5:
+                limitar_ip       = st.checkbox("Limitar IP", value=False)
 
         seguranca = {
             "bloquear_copia":   bloquear_copia,
@@ -65,12 +67,12 @@ def tela_batalha_gerenciar():
             "limitar_IP":       limitar_ip
         }
 
-        if st.button("Criar batalha"):
+        if st.button("Criar batalha", use_container_width=True):
             if not titulo.strip():
                 st.warning("O titulo e obrigatorio.")
             else:
                 batalhas_existentes = listar_batalhas()
-                titulos_existentes = [
+                titulos_existentes  = [
                     b.get("titulo", "").strip().lower()
                     for b in batalhas_existentes
                     if isinstance(b, dict)
@@ -88,7 +90,7 @@ def tela_batalha_gerenciar():
                     st.error("Erro ao criar batalha.")
 
     st.divider()
-    st.subheader("Batalhas cadastradas")
+    st.markdown("### Batalhas cadastradas")
 
     batalhas = listar_batalhas()
 
@@ -100,37 +102,49 @@ def tela_batalha_gerenciar():
 
         bid        = b.get("id")
         finalizada = b.get("finalizada", False)
-        status_txt = "Finalizada" if finalizada else "Em aberto"
+        cor_status = "#00b4d8" if not finalizada else "#90caf9"
+        status_txt = "Em aberto" if not finalizada else "Finalizada"
 
         with st.container(border=True):
 
-            col1, col2 = st.columns([3, 1])
+            st.markdown(f"""
+            <div style="
+                display:flex;
+                justify-content:space-between;
+                align-items:center;
+                margin-bottom:8px;
+            ">
+                <strong style="color:#0d1b2a; font-size:16px;">{b.get('titulo')}</strong>
+                <span style="
+                    background:{cor_status};
+                    color:#fff;
+                    padding:3px 10px;
+                    border-radius:20px;
+                    font-size:12px;
+                    font-weight:600;
+                ">{status_txt}</span>
+            </div>
+            <p style="color:#555; font-size:13px; margin:0;">
+                Rodadas: {b.get('quantidade_rodadas','-')} &nbsp;|&nbsp;
+                Prazo: {b.get('prazo') or 'sem prazo'}
+            </p>
+            """, unsafe_allow_html=True)
 
-            with col1:
-                st.markdown(f"**{b.get('titulo')}**")
-                st.caption(
-                    f"Status: {status_txt} | "
-                    f"Rodadas: {b.get('quantidade_rodadas', '-')} | "
-                    f"Prazo: {b.get('prazo') or 'sem prazo'}"
-                )
-                if b.get("descricao"):
-                    st.write(b["descricao"])
+            if b.get("descricao"):
+                st.caption(b["descricao"])
 
-                criterios_lista = b.get("criterios_avaliacao") or []
-                if criterios_lista:
-                    with st.expander("Criterios"):
-                        for c in criterios_lista:
-                            st.markdown(f"- {c}")
+            criterios_lista = b.get("criterios_avaliacao") or []
+            if criterios_lista:
+                with st.expander("Criterios"):
+                    for c in criterios_lista:
+                        st.markdown(f"- {c}")
 
-                if b.get("regras_conduta"):
-                    with st.expander("Regras"):
-                        st.write(b["regras_conduta"])
+            if b.get("regras_conduta"):
+                with st.expander("Regras"):
+                    st.write(b["regras_conduta"])
 
-            with col2:
-                if not finalizada:
-                    if st.button("Finalizar", key=f"fin_{bid}"):
-                        finalizar_batalha(bid)
-                        st.success("Batalha finalizada.")
-                        st.rerun()
-                else:
-                    st.info("Encerrada")
+            if not finalizada:
+                if st.button("Finalizar batalha", key=f"fin_{bid}", use_container_width=True):
+                    finalizar_batalha(bid)
+                    st.success("Batalha finalizada.")
+                    st.rerun()
