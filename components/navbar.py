@@ -1,43 +1,58 @@
 import streamlit as st
 
+
 def mostrar_menu():
     pagina_atual = st.session_state.get("pagina", "home")
-    usuario = st.session_state.usuario_logado
+    usuario      = st.session_state.usuario_logado
 
+    # CSS injetado ANTES do with st.sidebar para garantir precedência
     st.markdown("""
         <style>
+        /* Botoes da sidebar: base transparente */
         [data-testid="stSidebar"] .stButton > button {
-            width: 100%;
-            text-align: left;
-            background-color: transparent;
-            border: none;
+            width: 100% !important;
+            text-align: left !important;
+            background-color: transparent !important;
+            border: none !important;
             color: #ffffff !important;
-            padding: 0.5rem 1rem;
-            border-radius: 8px;
-            font-weight: 600;
-            transition: background 0.2s;
+            padding: 0.5rem 1rem !important;
+            border-radius: 8px !important;
+            font-weight: 600 !important;
+            transition: background 0.2s !important;
+            box-shadow: none !important;
         }
         [data-testid="stSidebar"] .stButton > button:hover {
             background-color: #00b4d8 !important;
             color: #ffffff !important;
         }
+        [data-testid="stSidebar"] .stButton > button:focus,
+        [data-testid="stSidebar"] .stButton > button:active {
+            background-color: transparent !important;
+            box-shadow: none !important;
+        }
+        /* Botao ativo: ciano com borda esquerda branca */
         [data-testid="stSidebar"] .botao-ativo .stButton > button {
             background-color: #00b4d8 !important;
             color: #ffffff !important;
             border-left: 4px solid #ffffff !important;
-            font-size: 1.05rem;
-            padding-left: 0.85rem;
+            padding-left: 0.85rem !important;
+            font-size: 1.02rem !important;
+        }
+        [data-testid="stSidebar"] .botao-ativo .stButton > button:focus,
+        [data-testid="stSidebar"] .botao-ativo .stButton > button:active {
+            background-color: #00b4d8 !important;
+            box-shadow: none !important;
         }
         </style>
     """, unsafe_allow_html=True)
 
     menu_items = [
-        ("Home", "home", "menu_home"),
-        ("Desafios", "desafios", "menu_desafios"),
-        ("Votação", "votacao", "menu_votacao"),
-        ("Mini-provas", "mini_provas", "menu_miniprovas"),
-        ("Quiz ao Vivo", "quiz_ao_vivo", "menu_quiz_ao_vivo"),
-        ("Batalha de Equipes", "batalha_de_equipes", "menu_batalha_de_equipes"),
+        ("Home",               "home",               "menu_home"),
+        ("Desafios",           "desafios",            "menu_desafios"),
+        ("Votação",            "votacao",             "menu_votacao"),
+        ("Mini-provas",        "mini_provas",         "menu_miniprovas"),
+        ("Quiz ao Vivo",       "quiz_ao_vivo",        "menu_quiz_ao_vivo"),
+        ("Batalha de Equipes", "batalha_de_equipes",  "menu_batalha_de_equipes"),
     ]
 
     if usuario["tipo_usuario"] == "admin":
