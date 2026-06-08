@@ -11,19 +11,22 @@ def mostrar_menu():
             text-align: left;
             background-color: transparent;
             border: none;
-            color: inherit;
+            color: #ffffff !important;
             padding: 0.5rem 1rem;
-            border-radius: 0.5rem;
-            transition: background-color 0.2s;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: background 0.2s;
         }
         [data-testid="stSidebar"] .stButton > button:hover {
-            background-color: rgba(255,255,255,0.1);
+            background-color: #00b4d8 !important;
+            color: #ffffff !important;
         }
         [data-testid="stSidebar"] .botao-ativo .stButton > button {
-            background-color: rgba(255,75,75,0.2) !important;
-            font-weight: bold;
-            border-left: 3px solid #FF4B4B !important;
-            color: #FF4B4B !important;
+            background-color: #00b4d8 !important;
+            color: #ffffff !important;
+            border-left: 4px solid #ffffff !important;
+            font-size: 1.05rem;
+            padding-left: 0.85rem;
         }
         </style>
     """, unsafe_allow_html=True)
@@ -31,7 +34,7 @@ def mostrar_menu():
     menu_items = [
         ("Home", "home", "menu_home"),
         ("Desafios", "desafios", "menu_desafios"),
-        ("Votacao", "votacao", "menu_votacao"),
+        ("Votação", "votacao", "menu_votacao"),
         ("Mini-provas", "mini_provas", "menu_miniprovas"),
         ("Quiz ao Vivo", "quiz_ao_vivo", "menu_quiz_ao_vivo"),
         ("Batalha de Equipes", "batalha_de_equipes", "menu_batalha_de_equipes"),
