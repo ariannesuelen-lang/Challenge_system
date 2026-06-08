@@ -15,9 +15,8 @@ def tela_desempenho_mini_provas():
 
     st.subheader("Disciplinas")
 
-    st.write("Matemática: 8.0")
-    st.write("Português: 7.5")
-    st.write("História: 9.0")
+    st.write("Banco de dados: 8.0")
+    st.write("Lab de Software: 7.5")
 
     st.divider()
 
