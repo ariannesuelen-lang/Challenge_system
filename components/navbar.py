@@ -1,103 +1,74 @@
 import streamlit as st
 
-
 def mostrar_menu():
+    pagina_atual = st.session_state.get("pagina", "home")
+    usuario = st.session_state.usuario_logado
+
+    st.markdown("""
+        <style>
+        [data-testid="stSidebar"] .stButton > button {
+            width: 100%;
+            text-align: left;
+            background-color: transparent;
+            border: none;
+            color: inherit;
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            transition: background-color 0.2s;
+        }
+        [data-testid="stSidebar"] .stButton > button:hover {
+            background-color: rgba(255,255,255,0.1);
+        }
+        </style>
+    """, unsafe_allow_html=True)
+
+    paginas_keys = {
+        "home": "menu_home",
+        "desafios": "menu_desafios",
+        "votacao": "menu_votacao",
+        "mini_provas": "menu_miniprovas",
+        "quiz_ao_vivo": "menu_quiz_ao_vivo",
+        "batalha_de_equipes": "menu_batalha_de_equipes",
+        "admin": "menu_admin",
+    }
+
+    key_ativo = paginas_keys.get(pagina_atual, "")
+
+    if key_ativo:
+        st.markdown(f"""
+            <style>
+            [data-testid="stSidebar"] [data-testid="stButton-{key_ativo}"] > button {{
+                background-color: rgba(255,255,255,0.15) !important;
+                font-weight: bold;
+                border-left: 3px solid #FF4B4B !important;
+            }}
+            </style>
+        """, unsafe_allow_html=True)
 
     with st.sidebar:
+        st.title("Challenge System")
+        st.write(f"Usuário: {usuario['nome']}")
+        st.divider()
 
-        st.markdown("""
-        <div style="
-            background: linear-gradient(180deg, #0d1b2a, #1b3a5c);
-            border-radius: 10px;
-            padding: 20px 16px 14px;
-            margin-bottom: 16px;
-            border-bottom: 3px solid #00b4d8;
-        ">
-            <h2 style="color:#ffffff; margin:0; font-size:20px; letter-spacing:1px;">
-                Challenge System
-            </h2>
-            <p style="color:#90caf9; margin:4px 0 0; font-size:12px;">
-                Plataforma de Aprendizado
-            </p>
-        </div>
-        """, unsafe_allow_html=True)
-
-        usuario = st.session_state.usuario_logado
-
-        st.markdown(f"""
-        <div style="
-            background:#1b3a5c;
-            border-radius: 8px;
-            padding: 10px 14px;
-            margin-bottom: 16px;
-            border-left: 3px solid #00b4d8;
-        ">
-            <p style="color:#90caf9; margin:0; font-size:11px;">Logado como</p>
-            <p style="color:#ffffff; margin:2px 0; font-weight:700; font-size:14px;">
-                {usuario['nome']}
-            </p>
-            <p style="
-                color:#00b4d8;
-                margin:0;
-                font-size:11px;
-                font-weight:600;
-                text-transform:uppercase;
-                letter-spacing:1px;
-            ">
-                {usuario.get('tipo_usuario','aluno').capitalize()}
-            </p>
-        </div>
-        """, unsafe_allow_html=True)
-
-        PAGINAS = [
-            ("Home",               "home"),
-            ("Desafios",           "desafios"),
-            ("Votacao",            "votacao"),
-            ("Mini-provas",        "mini_provas"),
-            ("Quiz ao Vivo",       "quiz_ao_vivo"),
-            ("Batalha de Equipes", "batalha_de_equipes"),
+        menu_items = [
+            ("Home", "home", "menu_home"),
+            ("Desafios", "desafios", "menu_desafios"),
+            ("Votacao", "votacao", "menu_votacao"),
+            ("Mini-provas", "mini_provas", "menu_miniprovas"),
+            ("Quiz ao Vivo", "quiz_ao_vivo", "menu_quiz_ao_vivo"),
+            ("Batalha de Equipes", "batalha_de_equipes", "menu_batalha_de_equipes"),
         ]
 
-        pagina_atual = st.session_state.pagina
+        if usuario["tipo_usuario"] == "admin":
+            menu_items.append(("Admin", "admin", "menu_admin"))
 
-        for label, pagina in PAGINAS:
-            ativo = pagina_atual == pagina or pagina_atual.startswith(pagina)
-            if ativo:
-                st.markdown(f"""
-                <div style="
-                    background:#00b4d8;
-                    border-radius:6px;
-                    padding:8px 12px;
-                    margin-bottom:4px;
-                    font-weight:700;
-                    color:#ffffff;
-                    cursor:pointer;
-                ">{label}</div>
-                """, unsafe_allow_html=True)
-                st.button(label, key=f"menu_{pagina}", use_container_width=True,
-                          disabled=False, on_click=lambda p=pagina: _ir(p))
-            else:
-                if st.button(label, key=f"menu_{pagina}", use_container_width=True):
-                    st.session_state.pagina = pagina
-                    st.rerun()
-
-        if usuario.get("tipo_usuario") == "admin":
-            if st.button("Admin", key="menu_admin", use_container_width=True):
-                st.session_state.pagina = "admin"
+        for label, pagina, key in menu_items:
+            if st.button(label, key=key):
+                st.session_state.pagina = pagina
                 st.rerun()
 
         st.divider()
-
-        if st.button("Sair", key="menu_sair", use_container_width=True):
-            try:
-                st.query_params.clear()
-            except Exception:
-                pass
+        if st.button("Sair", key="menu_sair"):
             st.session_state.usuario_logado = None
-            st.session_state.pagina         = "login"
+            st.session_state.pagina = "login"
             st.rerun()
-
-
-def _ir(pagina):
-    st.session_state.pagina = pagina
-    st.rerun()
