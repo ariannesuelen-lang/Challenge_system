@@ -7,15 +7,19 @@ def tela_home():
 
     aplicar_estilo()
 
-    usuario  = st.session_state.usuario_logado
+    usuario  = st.session_state.get("usuario_logado", {})
     desafios = listar_desafios()
 
+    # Busca segura do nome e tipo de usuário para evitar KeyError na entrada
+    nome_usuario = usuario.get("nome") or usuario.get("username") or "Usuário"
+    tipo_usuario = usuario.get("tipo_usuario") or usuario.get("perfil") or "aluno"
+
     cabecalho(
-        f"Bem-vindo(a), {usuario['nome']}",
-        f"Perfil: {usuario.get('tipo_usuario','aluno').capitalize()}"
+        f"Bem-vindo(a), {nome_usuario}",
+        f"Perfil: {tipo_usuario.capitalize()}"
     )
 
-# --------------------------------------------------
+    # --------------------------------------------------
     # DESAFIOS
     # --------------------------------------------------
     with st.expander("Desafios disponiveis", expanded=True):
@@ -30,10 +34,10 @@ def tela_home():
                     padding:12px 16px;
                     margin-bottom:8px;
                 ">
-                    <strong style="color:#0d1b2a;">{d['titulo']}</strong><br>
+                    <strong style="color:#0d1b2a;">{d.get('titulo', 'Sem Título')}</strong><br>
                     <span style="color:#555; font-size:13px;">{d.get('descricao','')}</span><br>
                     <span style="color:#00b4d8; font-size:12px;">
-                        Nível: {d.get('nivel_dificuldade','-')} &nbsp;|&nbsp; 
+                        Nível: {d.get('nivel_dificuldade', d.get('nivel', '-'))} &nbsp;|&nbsp; 
                         Prazo: {d.get('data_limite','-')}
                     </span>
                 </div>
@@ -41,7 +45,7 @@ def tela_home():
         else:
             st.info("Nenhum desafio disponivel no momento.")
 
-        if st.button("Ver todos os desafios", key="home_desafios"):
+        if st.button("Ver todos os desafios", key="home_desafios", width="stretch"):
             st.session_state.pagina = "desafios"
             st.rerun()
 
@@ -60,13 +64,13 @@ def tela_home():
                     padding:10px 14px;
                     margin-bottom:6px;
                 ">
-                    <span style="color:#0d1b2a; font-weight:600;">{d['titulo']}</span>
+                    <span style="color:#0d1b2a; font-weight:600;">{d.get('titulo', 'Sem Título')}</span>
                 </div>
                 """, unsafe_allow_html=True)
         else:
             st.info("Nenhum desafio disponivel para voto.")
 
-        if st.button("Ir para Votacao", key="home_votacao"):
+        if st.button("Ir para Votacao", key="home_votacao", width="stretch"):
             st.session_state.pagina = "votacao"
             st.rerun()
 
@@ -81,7 +85,7 @@ def tela_home():
         with col2:
             st.metric("Sua pontuacao", "—")
 
-        if st.button("Ir para Mini-provas", key="home_mini"):
+        if st.button("Ir para Mini-provas", key="home_mini", width="stretch"):
             st.session_state.pagina = "mini_provas"
             st.rerun()
 
@@ -103,7 +107,7 @@ def tela_home():
         </div>
         """, unsafe_allow_html=True)
 
-        if st.button("Ir para Quiz ao Vivo", key="home_quiz"):
+        if st.button("Ir para Quiz ao Vivo", key="home_quiz", width="stretch"):
             st.session_state.pagina = "quiz_ao_vivo"
             st.rerun()
 
@@ -118,6 +122,6 @@ def tela_home():
         with col2:
             st.metric("Seu time", "—")
 
-        if st.button("Ir para Batalha de Equipes", key="home_batalha"):
+        if st.button("Ir para Batalha de Equipes", key="home_batalha", width="stretch"):
             st.session_state.pagina = "batalha_de_equipes"
             st.rerun()
