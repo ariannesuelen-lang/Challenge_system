@@ -6,17 +6,10 @@ from components.navbar import mostrar_menu
 from telas.login import tela_login
 from telas.cadastro import tela_cadastro
 from telas.home import tela_home
-try:
-    from telas.quiz_ao_vivo import tela_quiz_ao_vivo
-except ImportError:
-    try:
-        # Tenta importar caso o arquivo ou pasta tenha iniciado com letra maiúscula no Git
-        from telas.Quiz_Ao_Vivo import tela_quiz_ao_vivo
-    except ImportError:
-        # Fallback de segurança para o app não crashar na inicialização
-        def tela_quiz_ao_vivo():
-            import streamlit as st
-            st.error("Erro ao carregar a tela de Quiz. Verifique o nome do arquivo no repositório.")
+
+# Importacao direta usando o nome exato do arquivo no seu GitHub
+from telas.Quiz_Ao_Vivo import tela_quiz_ao_vivo
+
 from telas.votacao import tela_votacao
 from telas.voto import tela_voto
 from telas.desafios import tela_desafios
@@ -75,16 +68,15 @@ elif pagina == "votacao":
 elif pagina == "voto":
     tela_voto()
 
-elif st.session_state.pagina == "quiz_ao_vivo":
-    from telas.Quiz_Ao_Vivo import tela_quiz_ao_vivo  # <--- Note o Q, A e V maiúsculos
+elif pagina == "quiz_ao_vivo":
     tela_quiz_ao_vivo()
 
 elif pagina == "mini_provas":
     if (
-    st.session_state.usuario_logado[
-        "tipo_usuario"
-    ] == "professor"
-):
+        st.session_state.usuario_logado[
+            "tipo_usuario"
+        ] == "professor"
+    ):
         tela_mini_provas_professor()
     else:
         tela_mini_provas()
