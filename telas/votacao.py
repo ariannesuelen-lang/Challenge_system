@@ -77,33 +77,38 @@ def tela_votacao():
                     key=f"aluno_id_{desafio.get('id')}"
                 )
 
-                if st.button("Confirmar Voto", key=f"voto_{desafio.get('id')}", width="stretch"):
+if st.button("Confirmar Voto", key=f"voto_{desafio.get('id')}", width="stretch"):
                     if aluno_id == usuario_id_logado:
                         st.error("Voce nao pode votar no seu proprio projeto.")
                     else:
                         desafio_id = desafio.get("id")
-                        resultado = None
                         
-                        # Bloco de tentativa inteligente para contornar a assinatura da funcao no service
+                        # Bloco de segurança para interceptar erros do banco (Supabase/PostgreSQL)
                         try:
-                            # Tentativa 1: Passando desafio_id, autor_id, e o eleitor_id
-                            resultado = registrar_voto(desafio_id, aluno_id, usuario_id_logado)
-                        except TypeError:
+                            resultado = None
+                            
+                            # Tentativa de execução padrão da sua assinatura
                             try:
-                                # Tentativa 2: Passando apenas desafio_id e autor_id (reverso)
-                                resultado = registrar_voto(aluno_id, desafio_id)
+                                resultado = registrar_voto(desafio_id, aluno_id, usuario_id_logado)
                             except TypeError:
                                 try:
-                                    # Tentativa 3: Passando os parametros normais originais
+                                    resultado = registrar_voto(aluno_id, desafio_id)
+                                except TypeError:
                                     resultado = registrar_voto(desafio_id, aluno_id)
-                                except Exception as e:
-                                    st.error(f"Erro de assinatura na funcao do banco: {str(e)}")
 
-                        # Trata o retorno visual com base no sucesso obtido
-                        if resultado:
-                            if isinstance(resultado, dict) and resultado.get("sucesso"):
-                                st.success("Seu voto foi registrado com sucesso!")
-                            elif isinstance(resultado, dict):
-                                st.error(resultado.get("mensagem", "Erro ao registrar voto."))
-                            else:
-                                st.success("Operacao de votacao concluida.")
+                            # Trata o retorno visual se o banco responder sem estourar APIError
+                            if resultado:
+                                if isinstance(resultado, dict) and resultado.get("sucesso"):
+                                    st.success("Seu voto foi registrado com sucesso!")
+                                elif isinstance(resultado, dict):
+                                    st.error(resultado.get("mensagem", "Erro ao registrar voto."))
+                                else:
+                                    st.success("Operacao de votacao concluida.")
+                                    
+                        except Exception as e:
+                            # Captura o erro do PostgREST/Supabase sem deixar o app cair em tela escura
+                            st.error("Erro de comunicacao com o banco de dados.")
+                            st.info(
+                                "Verifique se a tabela de votos possui as colunas corretas "
+                                "ou se as politicas de seguranca (RLS) do Supabase estao ativas."
+                            )
