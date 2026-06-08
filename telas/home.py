@@ -15,7 +15,7 @@ def tela_home():
         f"Perfil: {usuario.get('tipo_usuario','aluno').capitalize()}"
     )
 
-    # --------------------------------------------------
+# --------------------------------------------------
     # DESAFIOS
     # --------------------------------------------------
     with st.expander("Desafios disponiveis", expanded=True):
@@ -33,7 +33,7 @@ def tela_home():
                     <strong style="color:#0d1b2a;">{d['titulo']}</strong><br>
                     <span style="color:#555; font-size:13px;">{d.get('descricao','')}</span><br>
                     <span style="color:#00b4d8; font-size:12px;">
-                        Nivel: {d.get('nivel','-')} &nbsp;|&nbsp;
+                        Nível: {d.get('nivel_dificuldade','-')} &nbsp;|&nbsp; 
                         Prazo: {d.get('data_limite','-')}
                     </span>
                 </div>
