@@ -1,43 +1,64 @@
-import streamlit as st
-from utils.supabase import supabase
+#  Variáveis de ambiente (chaves, tokens, etc)
+.env
+.env.*
+*.env
 
-def listar_desafios():
-    """
-    Retorna a lista de todos os desafios cadastrados no banco de dados.
-    Corrigido para usar a coluna real 'criado_em' em vez de 'data_criacao'.
-    """
-    try:
-        resultado = supabase.table("desafios") \
-            .select("*") \
-            .order("criado_em", descending=True) \
-            .execute()
-        return resultado.data
-    except Exception as e:
-        # Se a ordenacao falhar por algum motivo, tenta uma busca simples sem order
-        try:
-            resultado = supabase.table("desafios").select("*").execute()
-            return resultado.data
-        except Exception as erro_critico:
-            print(f"Erro critico ao listar desafios: {erro_critico}")
-            return []
+# Ambiente virtual
+venv/
+.venv/
 
+# Python
+__pycache__/
+*.pyc
 
-def criar_desafio(titulo, descricao, criador_id, data_limite=None, nivel_dificuldade="Médio"):
-    """
-    Cria um novo desafio respeitando as colunas exatas da tabela public.desafios.
-    """
-    try:
-        dados = {
-            "titulo": str(titulo),
-            "descricao": str(descricao),
-            "criador_id": int(criador_id),
-            "nivel_dificuldade": str(nivel_dificuldade)
-        }
-        
-        if data_limite:
-            dados["data_limite"] = str(data_limite)
-            
-        resultado = supabase.table("desafios").insert(dados).execute()
-        return {"sucesso": True, "dados": resultado.data}
-    except Exception as e:
-        return {"sucesso": False, "mensagem": f"Erro ao inserir desafio: {str(e)}"}
+# PyCharm
+.idea/
+
+# Streamlit
+.streamlit/secrets.toml
+
+# Sistema
+.DS_Store
+Thumbs.db
+
+#  Arquivos de configuração sensíveis
+config.js
+config.json
+secrets.json
+
+# Caminhos locais / arquivos do sistema
+*.log
+*.tmp
+*.cache
+
+# Windows
+Thumbs.db
+Desktop.ini
+
+# Mac
+.DS_Store
+
+# Linux
+*~
+
+# Dependências (caso use futuramente)
+node_modules/
+
+# Arquivos de teste/local
+test/
+tests/
+*.spec.js
+
+#  IDEs e editores
+.vscode/
+.idea/
+*.swp
+
+# Build / arquivos gerados
+dist/
+build/
+out/
+
+#  Backup
+*.bak
+*.old
