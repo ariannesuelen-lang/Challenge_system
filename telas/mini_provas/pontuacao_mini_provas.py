@@ -9,7 +9,7 @@ def tela_pontuacao_mini_provas():
 
     col1, col2 = st.columns(2)
     with col1:
-        st.metric("Pontuação Total", "4.2")
+        st.metric("Pontuação Total", "5.0")
     with col2:
         st.metric("Posição", "1º")
 
