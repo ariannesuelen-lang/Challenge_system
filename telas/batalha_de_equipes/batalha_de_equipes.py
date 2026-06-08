@@ -18,20 +18,20 @@ def tela_batalha_de_equipes():
     # ── Abas de acordo com o perfil ──────────────────────────────────────────
     if tipo == "professor":
         abas = st.tabs([
-            "⚔️  Times",
-            "👥  Integrantes",
-            "📋  Regras",
-            "🏟️  Batalhas em Andamento",
-            "⚙️  Gerenciar Batalhas",
+            "  Times",
+            "  Integrantes",
+            "  Regras",
+            "  Batalhas em Andamento",
+            "  Gerenciar Batalhas",
         ])
         tab_times, tab_integrantes, tab_regras, tab_rodada, tab_gerenciar = abas
     else:
         abas = st.tabs([
-            "⚔️  Times",
-            "👥  Integrantes",
-            "📋  Regras",
-            "🏟️  Batalhas Abertas",
-            "📝  Minhas Respostas",
+            "  Times",
+            "  Integrantes",
+            "  Regras",
+            "  Batalhas Abertas",
+            "  Minhas Respostas",
         ])
         tab_times, tab_integrantes, tab_regras, tab_rodada, tab_respostas = abas
 
