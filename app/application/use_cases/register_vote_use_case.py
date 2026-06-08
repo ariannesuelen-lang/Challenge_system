@@ -1,13 +1,13 @@
 # app/application/use_cases/register_vote_use_case.py
 from __future__ import annotations
 
-from app.application.dtos.vote_dtos import (
+from application.dtos.vote_dtos import (
     RegisterVoteInputDTO,
     VoteOutputDTO,
     VoteStatisticsOutputDTO,
     VoteListOutputDTO,
 )
-from app.domain.services.voting_service import VotingService
+from domain.services.voting_service import VotingService
 
 
 class RegisterVoteUseCase:

@@ -6,7 +6,7 @@ from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from typing import Optional
 
-from app.domain.value_objects.vote_score import VoteScore
+from domain.value_objects.vote_score import VoteScore
 
 
 @dataclass

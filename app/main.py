@@ -8,19 +8,19 @@ from fastapi.responses import JSONResponse
 from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 
-from app.config import settings
-from app.infrastructure.repositories.in_memory_vote_repository import (
+from config import settings
+from infrastructure.repositories.in_memory_vote_repository import (
     InMemoryVoteRepository,
 )
-from app.domain.services.voting_service import VotingService
-from app.application.use_cases.register_vote_use_case import (
+from domain.services.voting_service import VotingService
+from application.use_cases.register_vote_use_case import (
     RegisterVoteUseCase,
     GetAllVotesUseCase,
     GetVoteStatisticsUseCase,
     GetAllVotesForTeacherUseCase,
 )
-from app.presentation.routes.vote_router import vote_router
-from app.infrastructure.rate_limiter.rate_limit_config import limiter
+from presentation.routes.vote_router import vote_router
+from infrastructure.rate_limiter.rate_limit_config import limiter
 
 logging.basicConfig(
     level=logging.INFO,
@@ -99,7 +99,7 @@ if __name__ == "__main__":
     import uvicorn
 
     uvicorn.run(
-        "app.main:app",
+        app,
         port=8000,
         reload=settings.debug,
         log_level="info",

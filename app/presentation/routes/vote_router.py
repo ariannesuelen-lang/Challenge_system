@@ -5,20 +5,20 @@ from typing import cast, Annotated, Dict, Optional
 from enum import Enum
 from pydantic import BaseModel
 
-from app.application.dtos.vote_dtos import (
+from application.dtos.vote_dtos import (
     RegisterVoteInputDTO,
 )
-from app.application.use_cases.register_vote_use_case import (
+from application.use_cases.register_vote_use_case import (
     RegisterVoteUseCase,
     GetAllVotesUseCase,
     GetVoteStatisticsUseCase,
 )
-from app.domain.exceptions.vote_exceptions import (
+from domain.exceptions.vote_exceptions import (
     VoteBelowMinimumError,
     VoteAboveMaximumError,
     VoteDomainError,
 )
-from app.presentation.schemas.vote_schema import (
+from presentation.schemas.vote_schema import (
     VoteResponseSchema,
     VoteStatsResponseSchema,
     VoteListResponseSchema,
@@ -26,8 +26,8 @@ from app.presentation.schemas.vote_schema import (
     StudentVoteRequestSchema,
     TeacherVoteListResponseSchema,
 )
-from app.config import settings
-from app.infrastructure.rate_limiter.rate_limit_config import limiter
+from config import settings
+from infrastructure.rate_limiter.rate_limit_config import limiter
 
 
 vote_router = APIRouter(prefix="/api/v1/votes", tags=["Votacao"])

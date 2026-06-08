@@ -4,7 +4,7 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from typing import List
 
-from app.domain.entities.vote import Vote
+from domain.entities.vote import Vote
 
 
 class VoteRepository(ABC):

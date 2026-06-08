@@ -3,9 +3,9 @@ from __future__ import annotations
 
 from typing import List
 
-from app.domain.entities.vote import Vote
-from app.domain.repositories.vote_repository import VoteRepository
-from app.domain.value_objects.vote_score import VoteScore
+from domain.entities.vote import Vote
+from domain.repositories.vote_repository import VoteRepository
+from domain.value_objects.vote_score import VoteScore
 
 
 class VotingService:

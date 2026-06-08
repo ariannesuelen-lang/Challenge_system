@@ -1,8 +1,8 @@
 # app/domain/value_objects/vote_score.py
 from __future__ import annotations
 
-from app.config import settings
-from app.domain.exceptions.vote_exceptions import (
+from config import settings
+from domain.exceptions.vote_exceptions import (
     VoteBelowMinimumError,
     VoteAboveMaximumError,
 )
