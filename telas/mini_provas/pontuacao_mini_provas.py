@@ -11,15 +11,13 @@ def tela_pontuacao_mini_provas():
     with col1:
         st.metric("Pontuação Total", "4.2")
     with col2:
-        st.metric("Posição", "3º")
+        st.metric("Posição", "1º")
 
     st.divider()
     st.markdown("### Ranking")
 
     ranking = [
-        {"pos": "1º", "nome": "João",  "pts": "5.0", "cor": "#FFD700"},
-        {"pos": "2º", "nome": "Maria", "pts": "4.5", "cor": "#C0C0C0"},
-        {"pos": "3º", "nome": "Você",  "pts": "4.2", "cor": "#CD7F32"},
+        {"pos": "1º", "nome": "Eu",  "pts": "5.0", "cor": "#FFD700"},
     ]
 
     for r in ranking:
