@@ -57,3 +57,79 @@ def tela_votacao():
                 
     else:
         st.subheader("Pesquisar e Votar")
+        
+        pesquisa = st.text_input("Pesquisar desafio por titulo")
+        
+        try:
+            desafios = listar_desafios()
+        except Exception:
+            desafios = []
+
+        # Reaproveita o sistema de busca por texto da sua versao antiga
+        if pesquisa and desafios:
+            desafios = [
+                d for d in desafios
+                if pesquisa.lower() in d.get("titulo", "").lower()
+            ]
+
+        # Se não houver desafios cadastrados no banco
+        if not desafios:
+            st.warning("Nenhum desafio ativo encontrado para votacao no momento.")
+            
+            # Criamos um bloco genérico para permitir voto por ID manual mesmo sem desafios listados
+            with st.container(border=True):
+                st.caption("Votacao Manual (Insira os IDs manualmente)")
+                desafio_id_manual = st.number_input("ID do Desafio", min_value=1, step=1, key="manual_desafio_id")
+                aluno_id = st.number_input("ID do Aluno Autor do Projeto", min_value=1, step=1, key="manual_aluno_id")
+                
+                if st.button("Confirmar Voto", key="voto_manual_btn", width="stretch"):
+                    if aluno_id == usuario_id_logado:
+                        st.error("Voce nao pode votar no seu proprio projeto.")
+                    else:
+                        _processar_voto(desafio_id_manual, aluno_id, usuario_id_logado)
+        else:
+            # Renderiza os desafios normais usando o container com borda estruturado pelo CSS
+            for desafio in desafios:
+                with st.container(border=True):
+                    st.subheader(desafio.get("titulo", "Sem Titulo"))
+                    st.write(f"Prazo final: {desafio.get('data_limite', 'Nao informado')}")
+                    
+                    aluno_id = st.number_input(
+                        "ID do Aluno Autor do Projeto", 
+                        min_value=1, 
+                        step=1, 
+                        key=f"aluno_id_{desafio.get('id')}"
+                    )
+
+                    if st.button("Confirmar Voto", key=f"voto_{desafio.get('id')}", width="stretch"):
+                        if aluno_id == usuario_id_logado:
+                            st.error("Voce nao pode votar no seu proprio projeto.")
+                        else:
+                            _processar_voto(desafio.get("id"), aluno_id, usuario_id_logado)
+
+
+def _processar_voto(desafio_id, aluno_id, usuario_id_logado):
+    """Funcao auxiliar para executar a chamada com tratamento de erros"""
+    try:
+        resultado = None
+        
+        # Combina os testes de argumentos para evitar incompatibilidade
+        try:
+            resultado = registrar_voto(desafio_id, aluno_id, usuario_id_logado)
+        except TypeError:
+            try:
+                resultado = registrar_voto(aluno_id, desafio_id)
+            except TypeError:
+                resultado = registrar_voto(desafio_id, aluno_id)
+
+        # Exibe o feedback se a execucao for concluida com sucesso
+        if resultado:
+            if isinstance(resultado, dict) and resultado.get("sucesso"):
+                st.success("Seu voto foi registrado com sucesso!")
+            elif isinstance(resultado, dict):
+                st.error(resultado.get("mensagem", "Erro ao registrar voto."))
+            else:
+                st.success("Operacao de votacao concluida.")
+                
+    except Exception as e:
+        st.error("Nao foi possivel computar o voto devido a um problema interno no banco de dados.")
