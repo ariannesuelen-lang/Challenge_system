@@ -5,7 +5,7 @@ from telas.cadastro import tela_cadastro
 from telas.home import tela_home
 from telas.votacao import tela_votacao
 
-# Importação tolerante a falhas da barra de navegação
+# Importacao tolerante a variacoes de nomenclatura para a barra de navegacao
 try:
     from components.navbar import mostrar_menu
 except ImportError:
@@ -17,26 +17,34 @@ except ImportError:
         except ImportError:
             def mostrar_menu():
                 st.sidebar.title("Menu do Sistema")
-                return st.sidebar.radio("Navegação", ["Home", "Votação"])
+                return st.sidebar.radio("Navegacao", ["Home", "Votacao"])
 
-# Tratamento adequado de escopo para os fallbacks das telas pendentes
+# Importacao estruturada com roteamento alternativo para a tela de desafios
 try: 
     from telas.desafios import tela_desafios
 except ImportError: 
-    def tela_desafios(): 
-        st.warning("Tela em desenvolvimento.")
+    try:
+        from Telas.desafios import tela_desafios
+    except ImportError:
+        try:
+            from telas.Desafios import tela_desafios
+        except ImportError:
+            def tela_desafios(): 
+                st.warning("O arquivo telas/desafios.py nao foi localizado no repositorio ou apresenta erros internos de sintaxe.")
 
+# Fallbacks de seguranca para gerenciamento das mini provas
 try: 
     from telas.mini_provas.mini_provas_professor import tela_mini_provas_professor
 except ImportError: 
     def tela_mini_provas_professor(): 
-        st.warning("Tela em desenvolvimento.")
+        st.warning("Tela de mini provas do professor em desenvolvimento.")
 
 try: 
     from telas.mini_provas.mini_provas_aluno import tela_mini_provas as tela_mini_provas_aluno
 except ImportError: 
     def tela_mini_provas_aluno(): 
-        st.warning("Tela em desenvolvimento.")
+        st.warning("Tela de mini provas do aluno em desenvolvimento.")
+
 
 def main():
     iniciar_session()
