@@ -10,7 +10,7 @@ def tela_home():
     
     cabecalho(
         f"Olá, {nome_usuario}!",
-        "Bem-vindo ao Challenge System."
+        "Bem-vindo ao painel do Challenge System. Veja as novidades abaixo."
     )
     
     st.subheader("Desafios em Destaque")
@@ -21,17 +21,18 @@ def tela_home():
         desafios = []
         
     if not desafios:
-        st.info("Nenhum desafio localizado.")
+        st.info("Nenhum desafio listado no momento.")
         return
 
-    for desafio in desafios[:3]:
+    # Renderização segura dos desafios cadastrados
+    for desafio in desafios[:3]:  # Exibe os 3 primeiros como destaque
         with st.container(border=True):
             st.markdown(f"### {desafio.get('titulo', 'Sem Título')}")
             st.write(desafio.get("descricao", "Sem descrição disponível."))
             
             col1, col2 = st.columns(2)
             with col1:
-                # Fallback em cadeia para garantir compatibilidade com o dicionário
+                # CORREÇÃO CRÍTICA: chave alterada de 'nivel' para 'nivel_dificuldade'
                 nivel = desafio.get("nivel_dificuldade") or desafio.get("nivel") or "Não informado"
                 st.caption(f"**Nível:** {nivel}")
             with col2:
