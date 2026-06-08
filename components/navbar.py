@@ -1,95 +1,58 @@
 import streamlit as st
+import re
+from services.auth_service import cadastrar_usuario
+from utils.estilo import aplicar_estilo, cabecalho
 
 
-def mostrar_menu():
+def tela_cadastro():
 
-    with st.sidebar:
+    aplicar_estilo()
+    cabecalho("Criar conta", "Preencha os dados para se cadastrar")
 
-        st.title("Challenge System")
+    col_esq, col_centro, col_dir = st.columns([1, 2, 1])
 
-        usuario = st.session_state.usuario_logado
+    with col_centro:
 
-        st.write(
-            f"Usuário: {usuario['nome']}"
-        )
+        with st.form("form_cadastro"):
 
-        st.divider()
+            nome = st.text_input("Nome completo", placeholder="Seu nome")
+            email = st.text_input("E-mail", placeholder="seu@email.com")
 
-        if st.button(
-            "Home",
-            key="menu_home"
-        ):
+            tipo_usuario = st.selectbox(
+                "Tipo de usuario",
+                ["aluno", "professor"],
+                format_func=lambda x: x.capitalize()
+            )
 
-            st.session_state.pagina = "home"
+            senha    = st.text_input("Senha", type="password", placeholder="••••••••")
+            confirmar = st.text_input("Confirmar senha", type="password", placeholder="••••••••")
 
-            st.rerun()
+            st.markdown("<br>", unsafe_allow_html=True)
+            cadastrar = st.form_submit_button("Cadastrar", use_container_width=True)
 
-        if st.button(
-            "Desafios",
-            key="menu_desafios"
-        ):
+        if cadastrar:
 
-            st.session_state.pagina = "desafios"
+            if not nome or not email or not senha:
+                st.warning("Preencha todos os campos.")
 
-            st.rerun()
+            elif not re.match(r"[^@]+@[^@]+\.[^@]+", email):
+                st.warning("E-mail invalido.")
 
-        if st.button(
-            "Votação",
-            key="menu_votacao"
-        ):
+            elif senha != confirmar:
+                st.error("As senhas nao coincidem.")
 
-            st.session_state.pagina = "votacao"
+            else:
+                resultado = cadastrar_usuario(nome, email, tipo_usuario, senha)
 
-            st.rerun()
-
-        if st.button(
-            "Mini-provas",
-            key="menu_miniprovas"
-        ):
-
-            st.session_state.pagina = "mini_provas"
-
-            st.rerun()
-
-        if st.button(
-            "Quiz ao Vivo",
-            key="menu_quiz_ao_vivo"
-        ):
-
-            st.session_state.pagina = "quiz_ao_vivo"
-
-            st.rerun()
-            
-        if st.button(
-            "Batalha de Equipes",
-            key="menu_batalha_de_equipes"
-        ):
-
-            st.session_state.pagina = "batalha_de_equipes"
-
-            st.rerun()
-    
-
-        if usuario["tipo_usuario"] == "admin":
-
-            if st.button(
-                "Admin",
-                key="menu_admin"
-            ):
-
-                st.session_state.pagina = "admin"
-
-                st.rerun()
+                if resultado == "ok":
+                    st.success("Conta criada com sucesso!")
+                    st.session_state.pagina = "login"
+                    st.rerun()
+                else:
+                    st.error(resultado)
 
         st.divider()
 
-        if st.button(
-            "Sair",
-            key="menu_sair"
-        ):
-
-            st.session_state.usuario_logado = None
-
+        if st.button("Voltar para o login", use_container_width=True):
             st.session_state.pagina = "login"
-
             st.rerun()
