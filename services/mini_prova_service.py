@@ -206,3 +206,33 @@ def atualizar_mini_prova(id_mini_prova, dados):
 
 def excluir_mini_prova(id_mini_prova):
     supabase.table("mini_provas").delete().eq("id", id_mini_prova).execute()
+
+def listar_perguntas_professor(email_professor):
+
+    professor = buscar_professor_por_email(
+        email_professor
+    )
+
+    if not professor:
+        return []
+
+    resposta = (
+        supabase
+        .table("questoes")
+        .select("""
+            *,
+            disciplinas(nome),
+            temas(nome)
+        """)
+        .eq(
+            "professor_id",
+            professor["id"]
+        )
+        .order(
+            "created_at",
+            desc=True
+        )
+        .execute()
+    )
+
+    return resposta.data
