@@ -30,18 +30,13 @@ def mostrar_menu():
             background-color: transparent !important;
             box-shadow: none !important;
         }
-        /* Botao ativo: ciano com borda esquerda branca */
-        [data-testid="stSidebar"] .botao-ativo .stButton > button {
+        /* Botao ativo: ciano com borda esquerda branca usando o container nativo */
+        [data-testid="stSidebar"] [data-testid="stVerticalBlockBorderWrapper"]:has(.botao-ativo) button {
             background-color: #00b4d8 !important;
             color: #ffffff !important;
             border-left: 4px solid #ffffff !important;
             padding-left: 0.85rem !important;
             font-size: 1.02rem !important;
-        }
-        [data-testid="stSidebar"] .botao-ativo .stButton > button:focus,
-        [data-testid="stSidebar"] .botao-ativo .stButton > button:active {
-            background-color: #00b4d8 !important;
-            box-shadow: none !important;
         }
         </style>
     """, unsafe_allow_html=True)
@@ -55,26 +50,31 @@ def mostrar_menu():
         ("Batalha de Equipes", "batalha_de_equipes",  "menu_batalha_de_equipes"),
     ]
 
-    if usuario["tipo_usuario"] == "admin":
+    # Evita quebrar se o dicionário de usuário não estiver completamente povoado
+    if usuario and usuario.get("tipo_usuario") == "admin":
         menu_items.append(("Admin", "admin", "menu_admin"))
 
     with st.sidebar:
         st.title("Challenge System")
-        st.write(f"Usuário: {usuario['nome']}")
+        if usuario:
+            st.write(f"Usuário: {usuario.get('nome', 'Usuário')}")
         st.divider()
 
         for label, pagina, key in menu_items:
-            ativo = pagina_atual == pagina
-            if ativo:
-                st.markdown('<div class="botao-ativo">', unsafe_allow_html=True)
-            if st.button(label, key=key):
-                st.session_state.pagina = pagina
-                st.rerun()
-            if ativo:
-                st.markdown('</div>', unsafe_allow_html=True)
+            ativo = (pagina_atual == pagina)
+            
+            # Usamos o st.container para encapsular o botão de forma limpa
+            with st.container():
+                if ativo:
+                    # Injeta uma tag invisível apenas para o CSS identificar este container específico
+                    st.markdown('<span class="botao-ativo"></span>', unsafe_allow_html=True)
+                
+                if st.button(label, key=key, width="stretch"):
+                    st.session_state.pagina = pagina
+                    st.rerun()
 
         st.divider()
-        if st.button("Sair", key="menu_sair"):
+        if st.button("Sair", key="menu_sair", width="stretch"):
             st.session_state.usuario_logado = None
             st.session_state.pagina = "login"
             st.rerun()
