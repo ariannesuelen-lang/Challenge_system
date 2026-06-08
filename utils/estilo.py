@@ -42,7 +42,7 @@ def aplicar_estilo():
         .stApp [data-testid="stMarkdownContainer"] h1,
         .stApp [data-testid="stMarkdownContainer"] h2,
         .stApp [data-testid="stMarkdownContainer"] h3 {
-            color: #0d1b2a !important;
+            color: #ffffff !important;
         }
 
         /* ----- TEXTO GERAL NO CONTEUDO ----- */
@@ -50,7 +50,7 @@ def aplicar_estilo():
         .stApp [data-testid="stMarkdownContainer"] span,
         .stApp .stText,
         .stApp label {
-            color: #0d1b2a !important;
+            color: #ffffff !important;
         }
 
         /* ----- BOTOES GLOBAIS (ciano) ----- */
