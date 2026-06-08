@@ -42,7 +42,7 @@ def aplicar_estilo():
         .stApp [data-testid="stMarkdownContainer"] h1,
         .stApp [data-testid="stMarkdownContainer"] h2,
         .stApp [data-testid="stMarkdownContainer"] h3 {
-            color: #ffffff !important;
+            color: #0d1b2a !important;
         }
 
         /* ----- TEXTO GERAL NO CONTEUDO ----- */
