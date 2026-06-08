@@ -20,15 +20,24 @@ except ImportError:
                 st.sidebar.title("Menu do Sistema")
                 return st.sidebar.radio("Navegação", ["Home", "Votação"])
 
-# Fallbacks dinâmicos para outras telas caso não existam no repositório
-try: from telas.desafios import tela_desafios
-except ImportError: def tela_desafios(): st.warning("Tela em desenvolvimento.")
+# Fallbacks dinâmicos para outras telas caso não existam no repositório (CORRIGIDO)
+try: 
+    from telas.desafios import tela_desafios
+except ImportError: 
+    def tela_desafios(): 
+        st.warning("Tela em desenvolvimento.")
 
-try: from telas.mini_provas.mini_provas_professor import tela_mini_provas_professor
-except ImportError: def tela_mini_provas_professor(): st.warning("Tela em desenvolvimento.")
+try: 
+    from telas.mini_provas.mini_provas_professor import tela_mini_provas_professor
+except ImportError: 
+    def tela_mini_provas_professor(): 
+        st.warning("Tela em desenvolvimento.")
 
-try: from telas.mini_provas.mini_provas_aluno import tela_mini_provas as tela_mini_provas_aluno
-except ImportError: def tela_mini_provas_aluno(): st.warning("Tela em desenvolvimento.")
+try: 
+    from telas.mini_provas.mini_provas_aluno import tela_mini_provas as tela_mini_provas_aluno
+except ImportError: 
+    def tela_mini_provas_aluno(): 
+        st.warning("Tela em desenvolvimento.")
 
 
 def main():
