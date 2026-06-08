@@ -1,13 +1,11 @@
 import streamlit as st
-# Certifique-se de que a importação do cliente do Supabase está correta para o seu projeto
-# Geralmente fica em utils.supabase_config ou diretamente em um arquivo de inicialização.
-# Ajuste a linha abaixo caso seu cliente do Supabase venha de outro arquivo:
-from utils.supabase_config import supabase 
+# Correção do caminho de importação baseado no seu repositório real:
+from utils.supabase import supabase 
 
 def buscar_voto_usuario(usuario_id, desafio_id):
     """
     Busca se o usuario logado ja votou em algum projeto para este desafio especifico.
-    Corrigido para usar a coluna real 'usuario_id' do banco de dados.
+    Usa a coluna real 'usuario_id' do seu banco de dados.
     """
     try:
         resultado = supabase.table("votos") \
@@ -17,7 +15,6 @@ def buscar_voto_usuario(usuario_id, desafio_id):
             .execute()
         return resultado.data
     except Exception as e:
-        # Retorna uma lista vazia ou propaga o erro para tratamento amigável na tela
         print(f"Erro ao buscar voto: {e}")
         return []
 
@@ -28,7 +25,7 @@ def registrar_voto(desafio_id, aluno_id, usuario_id_logado):
     dentro do desafio selecionado (desafio_id).
     """
     try:
-        # 1. Verifica se o usuário já votou neste desafio para evitar votos duplicados
+        # 1. Verifica se o usuário já votou neste desafio
         votos_existentes = buscar_voto_usuario(usuario_id_logado, desafio_id)
         
         if votos_existentes:
@@ -37,11 +34,11 @@ def registrar_voto(desafio_id, aluno_id, usuario_id_logado):
                 "mensagem": "Voce ja registrou um voto para este desafio!"
             }
         
-        # 2. Prepara o dicionário mapeando EXATAMENTE com as colunas da sua tabela 'votos'
+        # 2. Mapeia exatamente as colunas text da tabela public.votos: usuario_id, desafio_id, voto
         dados_voto = {
-            "usuario_id": str(usuario_id_logado), # Quem está votando (Eleitor)
-            "desafio_id": str(desafio_id),        # O desafio em questão
-            "voto": str(aluno_id)                 # O ID do aluno autor do projeto recebendo o voto
+            "usuario_id": str(usuario_id_logado), # Eleitor
+            "desafio_id": str(desafio_id),        # Desafio
+            "voto": str(aluno_id)                 # Aluno que recebeu o voto
         }
         
         # 3. Insere o registro no Supabase
