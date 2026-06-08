@@ -18,7 +18,10 @@ def tela_desempenho_mini_provas():
     st.write("Banco de dados: 8.0")
     st.write("Lab de Software: 7.5")
 
- st.divider()
+    st.divider()
+
     if st.button("Voltar"):
-        st.session_state.pagina = "mini_provas"
-        st.rerun()
+
+        st.switch_page(
+            "telas/mini_provas/mini_provas.py"
+        )
