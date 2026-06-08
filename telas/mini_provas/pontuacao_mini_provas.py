@@ -1,32 +1,44 @@
 import streamlit as st
+from utils.estilo import aplicar_estilo, cabecalho
 
 
 def tela_pontuacao_mini_provas():
 
-    st.title("Minha Pontuação")
+    aplicar_estilo()
+    cabecalho("Minha Pontuação", "Veja seu desempenho nas mini-provas")
 
-    st.metric("Pontuação Total", "4.2")
-
-    st.metric("Posição", "3º")
+    col1, col2 = st.columns(2)
+    with col1:
+        st.metric("Pontuação Total", "4.2")
+    with col2:
+        st.metric("Posição", "3º")
 
     st.divider()
-
-    st.subheader("Ranking")
+    st.markdown("### Ranking")
 
     ranking = [
-        "1º João - 5.0",
-        "2º Maria - 4.5",
-        "3º Você - 4.2"
+        {"pos": "1º", "nome": "João",  "pts": "5.0", "cor": "#FFD700"},
+        {"pos": "2º", "nome": "Maria", "pts": "4.5", "cor": "#C0C0C0"},
+        {"pos": "3º", "nome": "Você",  "pts": "4.2", "cor": "#CD7F32"},
     ]
 
-    for jogador in ranking:
-
-        st.write(jogador)
+    for r in ranking:
+        st.markdown(f"""
+        <div style="
+            background:#f0f9ff;
+            border-left:4px solid {r['cor']};
+            border-radius:8px;
+            padding:10px 16px;
+            margin-bottom:6px;
+            display:flex;
+            justify-content:space-between;
+        ">
+            <strong style="color:#0d1b2a;">{r['pos']} — {r['nome']}</strong>
+            <span style="color:{r['cor']}; font-weight:700;">{r['pts']} pts</span>
+        </div>
+        """, unsafe_allow_html=True)
 
     st.divider()
-
     if st.button("Voltar"):
-
-        st.switch_page(
-            "telas/mini_provas/mini_provas.py"
-        )
+        st.session_state.pagina = "mini_provas"
+        st.rerun()
