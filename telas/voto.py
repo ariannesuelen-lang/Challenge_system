@@ -1,6 +1,5 @@
 import streamlit as st
 import pandas as pd
-
 from services.votacao_service import (
     buscar_voto_usuario,
     registrar_voto,
@@ -8,297 +7,72 @@ from services.votacao_service import (
     deletar_voto,
     listar_votos_desafio
 )
+from utils.estilo import aplicar_estilo, cabecalho
 
 
 def tela_voto():
 
-    desafio = st.session_state.desafio_voto
+    aplicar_estilo()
 
+    desafio = st.session_state.desafio_voto
     usuario = st.session_state.usuario_logado
 
-    st.title(
-        desafio["titulo"]
-    )
+    cabecalho(desafio["titulo"], f"Prazo: {desafio['data_limite']}")
 
-    st.write(
-        f"Prazo: {desafio['data_limite']}"
-    )
-
-    if st.button(
-        "Voltar para desafios"
-    ):
-
+    if st.button("Voltar para Votação"):
         st.session_state.pagina = "votacao"
-
         st.rerun()
 
     st.divider()
 
-    voto_existente = buscar_voto_usuario(
-        usuario["email"],
-        desafio["titulo"]
-    )
-
-    opcoes = [
-        "Bom",
-        "Regular",
-        "Ruim"
-    ]
-
-    editar = False
+    voto_existente = buscar_voto_usuario(usuario["email"], desafio["titulo"])
+    opcoes = ["Bom", "Regular", "Ruim"]
 
     if voto_existente:
+        st.markdown(f"""
+        <div style="
+            background:#f0f9ff;
+            border-left:4px solid #00b4d8;
+            border-radius:8px;
+            padding:14px 18px;
+            margin-bottom:12px;
+        ">
+            <strong style="color:#0d1b2a;">Seu voto atual: {voto_existente['voto']}</strong>
+        </div>
+        """, unsafe_allow_html=True)
 
-        st.success(
-            f"Seu voto atual: {voto_existente['voto']}"
-        )
+        col1, col2 = st.columns(2)
+        with col1:
+            if st.button("Editar voto", use_container_width=True):
+                st.session_state.editando_voto = True
+        with col2:
+            if st.button("Deletar voto", use_container_width=True):
+                deletar_voto(usuario["email"], desafio["titulo"])
+                st.success("Voto deletado.")
+                st.rerun()
 
-        if st.button(
-            "Editar voto"
-        ):
-
-            st.session_state.editando_voto = True
-
-            st.rerun()
-
-        editar = st.session_state.get(
-            "editando_voto",
-            False
-        )
-
+        if st.session_state.get("editando_voto"):
+            with st.container(border=True):
+                novo_voto = st.selectbox("Novo voto", opcoes)
+                if st.button("Salvar", use_container_width=True):
+                    atualizar_voto(usuario["email"], desafio["titulo"], novo_voto)
+                    st.success("Voto atualizado!")
+                    st.session_state.editando_voto = False
+                    st.rerun()
     else:
-
-        editar = True
-
-    if editar:
-
-        voto = st.radio(
-            "Escolha seu voto",
-            opcoes
-        )
-
-        if voto_existente:
-
-            col1, col2 = st.columns(2)
-
-            with col1:
-
-                if st.button(
-                    "Salvar edição"
-                ):
-
-                    atualizar_voto(
-                        voto_existente["id"],
-                        voto
-                    )
-
-                    st.session_state.editando_voto = False
-
-                    st.success(
-                        "Voto atualizado"
-                    )
-
-                    st.rerun()
-
-            with col2:
-
-                if st.button(
-                    "Excluir voto"
-                ):
-
-                    deletar_voto(
-                        voto_existente["id"]
-                    )
-
-                    st.session_state.editando_voto = False
-
-                    st.success(
-                        "Voto excluído"
-                    )
-
-                    st.rerun()
-
-        else:
-
-            if st.button(
-                "Enviar voto"
-            ):
-
-                registrar_voto(
-                    usuario["email"],
-                    desafio["titulo"],
-                    voto
-                )
-
-                st.success(
-                    "Voto registrado"
-                )
-
+        with st.container(border=True):
+            st.markdown("### Registrar voto")
+            voto = st.selectbox("Sua avaliação", opcoes)
+            if st.button("Votar", use_container_width=True):
+                registrar_voto(usuario["email"], desafio["titulo"], voto)
+                st.success("Voto registrado!")
                 st.rerun()
 
     st.divider()
-
-    if "mostrar_resultado" not in st.session_state:
-
-        st.session_state.mostrar_resultado = False
-
-    if st.button(
-        "Mostrar / Ocultar resultados"
-    ):
-
-        st.session_state.mostrar_resultado = (
-            not st.session_state.mostrar_resultado
-        )
-
-        st.rerun()
-
-    if st.session_state.mostrar_resultado:
-
-        votos = listar_votos_desafio(
-            desafio["titulo"]
-        )
-
-        if votos:
-
-            df = pd.DataFrame(votos)
-
-            contagem = df["voto"].value_counts()
-
-            contagem = contagem.reindex(
-                ["Bom", "Regular", "Ruim"],
-                fill_value=0
-            )
-
-            st.subheader(
-                "Resultado"
-            )
-
-            st.bar_chart(
-                contagem
-            )
-
-            st.write(
-                f"Total de votos: {len(df)}"
-            )
-
-            # PROFESSOR E ADMIN
-            if usuario["tipo_usuario"] in [
-                "professor",
-                "admin"
-            ]:
-
-                st.divider()
-
-                st.subheader(
-                    "Gerenciar votos"
-                )
-
-                filtro = st.selectbox(
-                    "Filtrar votos",
-                    [
-                        "Todos",
-                        "Bom",
-                        "Regular",
-                        "Ruim"
-                    ]
-                )
-
-                votos_filtrados = votos
-
-                if filtro != "Todos":
-
-                    votos_filtrados = [
-                        v for v in votos
-                        if v["voto"] == filtro
-                    ]
-
-                if votos_filtrados:
-
-                    col1, col2, col3, col4 = st.columns(
-                        [3, 2, 2, 2]
-                    )
-
-                    with col1:
-                        st.write("Usuário")
-
-                    with col2:
-                        st.write("Nota")
-
-                    with col3:
-                        st.write("Salvar")
-
-                    with col4:
-                        st.write("Excluir")
-
-                    st.divider()
-
-                    for voto_item in votos_filtrados:
-
-                        col1, col2, col3, col4 = st.columns(
-                            [3, 2, 2, 2]
-                        )
-
-                        with col1:
-
-                            st.write(
-                                voto_item["usuario"]
-                            )
-
-                        with col2:
-
-                            novo_voto = st.selectbox(
-                                "Nota",
-                                opcoes,
-                                index=opcoes.index(
-                                    voto_item["voto"]
-                                ),
-                                key=f"select_{voto_item['id']}",
-                                label_visibility="collapsed"
-                            )
-
-                        with col3:
-
-                            if st.button(
-                                "Salvar",
-                                key=f"salvar_{voto_item['id']}"
-                            ):
-
-                                atualizar_voto(
-                                    voto_item["id"],
-                                    novo_voto
-                                )
-
-                                st.success(
-                                    "Atualizado"
-                                )
-
-                                st.rerun()
-
-                        with col4:
-
-                            if st.button(
-                                "Excluir",
-                                key=f"delete_{voto_item['id']}"
-                            ):
-
-                                deletar_voto(
-                                    voto_item["id"]
-                                )
-
-                                st.success(
-                                    "Excluído"
-                                )
-
-                                st.rerun()
-
-                else:
-
-                    st.info(
-                        "Nenhum voto encontrado"
-                    )
-
-        else:
-
-            st.warning(
-                "Nenhum voto encontrado"
-            )
+    st.markdown("### Votos registrados")
+    votos = listar_votos_desafio(desafio["titulo"])
+    if votos:
+        df = pd.DataFrame(votos)
+        st.dataframe(df, use_container_width=True, hide_index=True)
+    else:
+        st.info("Nenhum voto registrado ainda.")
