@@ -1,40 +1,214 @@
 import streamlit as st
-from services.votacao_service import listar_desafios_votacao
-from utils.estilo import aplicar_estilo, cabecalho
+
+from services.quiz_ao_vivo_service import (
+    criar_quiz,
+    adicionar_pergunta,
+    alterar_status_quiz,
+    entrar_quiz,
+    obter_perguntas_quizaovivo,
+    responder_pergunta,
+    obter_ranking,
+    avancar_pergunta,
+    repo_get_quiz,
+)
 
 
-def tela_votacao():
+def tela_quiz_ao_vivo():
+    usuario = st.session_state.get("usuario_logado", {})
+    tipo = usuario.get("tipo_usuario", "aluno")
 
-    aplicar_estilo()
-    cabecalho("Votação", "Vote nos desafios disponíveis")
+    st.title("Quiz ao Vivo")
 
-    pesquisa = st.text_input("Pesquisar desafio")
-    desafios = listar_desafios_votacao()
+    if tipo == "professor":
+        st.subheader("Criar Quiz")
 
-    if pesquisa:
-        desafios = [
-            d for d in desafios
-            if pesquisa.lower() in d["titulo"].lower()
-        ]
+        titulo = st.text_input("Titulo do Quiz")
 
-    if not desafios:
-        st.warning("Nenhum desafio encontrado.")
-        return
+        if st.button("Criar Quiz", width="stretch"):
+            resultado = criar_quiz(titulo, usuario.get("id"))
 
-    for desafio in desafios:
-        st.markdown(f"""
-        <div style="
-            background:#f0f9ff;
-            border-left:4px solid #00b4d8;
-            border-radius:8px;
-            padding:14px 18px;
-            margin-bottom:10px;
-        ">
-            <strong style="color:#0d1b2a; font-size:15px;">{desafio['titulo']}</strong><br>
-            <span style="color:#00b4d8; font-size:12px;">Prazo: {desafio['data_limite']}</span>
-        </div>
-        """, unsafe_allow_html=True)
-        if st.button("Abrir", key=f"abrir_{desafio['id']}", use_container_width=False):
-            st.session_state.desafio_voto = desafio
-            st.session_state.pagina = "voto"
-            st.rerun()
+            if resultado["sucesso"]:
+                st.success("Quiz criado com sucesso!")
+            else:
+                st.error(resultado["mensagem"])
+
+        st.subheader("Adicionar Pergunta")
+
+        quiz_id = st.number_input(
+            "ID do Quiz",
+            min_value=1,
+            key="quiz_pergunta",
+        )
+
+        texto = st.text_area("Pergunta")
+
+        alt1 = st.text_input("Alternativa A")
+        alt2 = st.text_input("Alternativa B")
+        alt3 = st.text_input("Alternativa C")
+        alt4 = st.text_input("Alternativa D")
+
+        alternativas = [alt1, alt2, alt3, alt4]
+
+        letra_correta = st.selectbox(
+            "Alternativa Correta",
+            ["A", "B", "C", "D"],
+        )
+
+        mapa = {
+            "A": 0,
+            "B": 1,
+            "C": 2,
+            "D": 3,
+        }
+
+        indice = mapa[letra_correta]
+
+        if st.button("Adicionar Pergunta", width="stretch"):
+            resultado = adicionar_pergunta(
+                quiz_id,
+                usuario.get("id"),
+                texto,
+                alternativas,
+                indice,
+            )
+
+            if resultado["sucesso"]:
+                st.success(f"Pergunta adicionada com sucesso ao Quiz {quiz_id}")
+            else:
+                st.error(resultado["mensagem"])
+
+        st.subheader("Controlar Quiz")
+
+        quiz_id_controle = st.number_input(
+            "Quiz para controlar",
+            min_value=1,
+            key="quiz_controle",
+        )
+
+        col_iniciar, col_proxima, col_finalizar = st.columns(3)
+
+        with col_iniciar:
+            if st.button("Iniciar Quiz", width="stretch"):
+                resultado = alterar_status_quiz(
+                    quiz_id_controle,
+                    usuario.get("id"),
+                    "iniciado",
+                )
+
+                if resultado["sucesso"]:
+                    st.success("Quiz iniciado!")
+                    st.rerun()
+                else:
+                    st.error(resultado["mensagem"])
+
+        with col_proxima:
+            if st.button("Proxima Pergunta", width="stretch"):
+                resultado = avancar_pergunta(
+                    quiz_id_controle,
+                    usuario.get("id"),
+                    "avancar"
+                )
+
+                if resultado["sucesso"]:
+                    pergunta_atual = resultado["dados"].get("pergunta_atual")
+                    st.success(f"Pergunta atual: {pergunta_atual}")
+                    st.rerun()
+                else:
+                    st.error(resultado["mensagem"])
+
+        with col_finalizar:
+            if st.button("Finalizar Quiz", width="stretch"):
+                resultado = alterar_status_quiz(
+                    quiz_id_controle,
+                    usuario.get("id"),
+                    "finalizado",
+                )
+
+                if resultado["sucesso"]:
+                    st.success("Quiz finalizado!")
+                    st.rerun()
+                else:
+                    st.error(resultado["mensagem"])
+
+        quiz = repo_get_quiz(quiz_id_controle)
+        if quiz:
+            st.info(
+                f"Status: {quiz.get('status')} | "
+                f"Pergunta atual: {quiz.get('pergunta_atual')}"
+            )
+
+    else:
+        quiz_id = st.number_input(
+            "ID do Quiz",
+            min_value=1,
+            key="quiz_aluno",
+        )
+
+        if st.button("Entrar no Quiz", width="stretch"):
+            resultado = entrar_quiz(usuario.get("id"), quiz_id)
+
+            if resultado["sucesso"]:
+                st.session_state[f"participacao_quiz_{quiz_id}"] = (
+                    resultado["dados"]["id"]
+                )
+                st.success("Voce entrou no quiz.")
+                st.rerun()
+            else:
+                st.error(resultado["mensagem"])
+
+        st.button("Atualizar pergunta", key=f"atualizar_quiz_{quiz_id}", width="stretch")
+
+        participacao_id = st.session_state.get(f"participacao_quiz_{quiz_id}")
+
+        if participacao_id:
+            quiz = repo_get_quiz(quiz_id)
+
+            if not quiz:
+                st.error("Quiz nao encontrado.")
+                st.stop()
+
+            if quiz.get("status") == "finalizado":
+                st.success("Quiz encerrado!")
+                _mostrar_ranking(quiz_id)
+                st.stop()
+
+            pergunta_atual = quiz.get("pergunta_atual")
+
+            if quiz.get("status") != "iniciado" or pergunta_atual is None:
+                st.info("Aguardando o professor iniciar o quiz.")
+                st.stop()
+
+            resultado = obter_perguntas_quizaovivo(quiz_id)
+
+            if not resultado["sucesso"]:
+                st.error(resultado.get("mensagem", "Erro ao carregar perguntas"))
+                st.stop()
+
+            perguntas = resultado["dados"]
+            indice_atual = int(pergunta_atual)
+
+            if indice_atual < 0 or indice_atual >= len(perguntas):
+                st.success("Quiz encerrado!")
+                _mostrar_ranking(quiz_id)
+                st.stop()
+
+            pergunta = perguntas[indice_atual]
+            alternativas = pergunta.get("alternativas") or []
+
+            if not alternativas:
+                st.error("Pergunta sem alternativas.")
+                st.stop()
+
+            st.subheader(f"Pergunta {indice_atual + 1} de {len(perguntas)}")
+
+            escolha = st.radio(
+                pergunta["texto"],
+                alternativas,
+                key=f"quiz_{quiz_id}_pergunta_{pergunta['id']}",
+            )
+
+            if st.button("Responder", key=f"resp_{quiz_id}_{pergunta['id']}", width="stretch"):
+                indice_resposta = alternativas.index(escolha)
+
+                retorno = responder_pergunta(
+                    participacao_id
