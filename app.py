@@ -75,7 +75,8 @@ elif pagina == "votacao":
 elif pagina == "voto":
     tela_voto()
 
-elif pagina == "quiz_ao_vivo":
+elif st.session_state.pagina == "quiz_ao_vivo":
+    from telas.Quiz_Ao_Vivo import tela_quiz_ao_vivo  # <--- Note o Q, A e V maiúsculos
     tela_quiz_ao_vivo()
 
 elif pagina == "mini_provas":
