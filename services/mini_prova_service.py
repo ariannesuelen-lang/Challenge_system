@@ -2,7 +2,7 @@ from database.conexao import supabase
 
 
 def buscar_professor_por_email(email):
-    # Correção: A tabela real é 'usuarios', filtrando pelo tipo correto
+    # Busca na tabela usuarios (nao existe tabela professores)
     resposta = (
         supabase
         .table("usuarios")
@@ -11,10 +11,18 @@ def buscar_professor_por_email(email):
         .eq("tipo_usuario", "professor")
         .execute()
     )
-
     if resposta.data:
         return resposta.data[0]
-
+    # Tenta também admin
+    resposta = (
+        supabase
+        .table("usuarios")
+        .select("*")
+        .eq("email", email)
+        .execute()
+    )
+    if resposta.data:
+        return resposta.data[0]
     return None
 
 
@@ -26,63 +34,34 @@ def buscar_ou_criar_disciplina(nome):
         .eq("nome", nome)
         .execute()
     )
-
     if buscar.data:
         return buscar.data[0]
-
     criar = (
         supabase
         .table("disciplinas")
         .insert({"nome": nome})
         .execute()
     )
-
-    return criar.data[0]
-
-
-def buscar_ou_criar_tema(disciplina_id, nome):
-    buscar = (
-        supabase
-        .table("temas")
-        .select("*")
-        .eq("nome", nome)
-        .eq("disciplina_id", disciplina_id)
-        .execute()
-    )
-
-    if buscar.data:
-        return buscar.data[0]
-
-    criar = (
-        supabase
-        .table("temas")
-        .insert({
-            "nome": nome,
-            "disciplina_id": disciplina_id
-        })
-        .execute()
-    )
-
     return criar.data[0]
 
 
 def criar_pergunta(dados):
     professor = buscar_professor_por_email(dados["email_professor"])
-    disciplina = buscar_ou_criar_disciplina(dados["disciplina"])
-    tema = buscar_ou_criar_tema(disciplina["id"], dados["assunto"])
+    if not professor:
+        return None
 
-    # Correções: colunas 'professor_id' (usa usuario_uuid), 'tipo_questao' e 'nivel_dificuldade'
+    disciplina = buscar_ou_criar_disciplina(dados["disciplina"])
+
     questao = (
         supabase
         .table("questoes")
         .insert({
-            "professor_id": professor["usuario_uuid"],  # FK aponta para usuario_uuid
+            "professor_id":  professor["id"],
             "disciplina_id": disciplina["id"],
-            "tema_id": tema["id"],
-            "tipo_questao": "multipla_escolha",         # Corrigido de 'tipo'
-            "nivel_dificuldade": dados["nivel"],        # Corrigido de 'nivel'
-            "enunciado": dados["enunciado"],
-            "pontos": 1
+            "tipo":          "multipla_escolha",
+            "nivel":         dados["nivel"],
+            "enunciado":     dados["enunciado"],
+            "pontos":        1
         })
         .execute()
     )
@@ -96,39 +75,50 @@ def criar_pergunta(dados):
         dados["alternativa_d"],
         dados["alternativa_e"]
     ]
-
     letras = ["A", "B", "C", "D", "E"]
 
     for i in range(5):
-        # Correção: coluna 'ordem_exibicao'
         supabase.table("alternativas").insert({
             "questao_id": questao_id,
-            "texto": alternativas[i],
-            "correta": (letras[i] == dados["resposta_correta"]),
-            "ordem_exibicao": i + 1                     # Corrigido de 'ordem'
+            "texto":      alternativas[i],
+            "correta":    (letras[i] == dados["resposta_correta"]),
+            "ordem":      i + 1
         }).execute()
 
 
 def criar_mini_prova(dados):
     professor = buscar_professor_por_email(dados["email_professor"])
-    disciplina = buscar_ou_criar_disciplina(dados["disciplina"])
+    if not professor:
+        return None
 
-    # Correções: colunas 'professor_id' (usuario_uuid) e 'quantidade_questoes'
+    payload = {
+        "professor_id": professor["id"],
+        "titulo":       dados["titulo"],
+        "descricao":    dados.get("assunto", ""),
+    }
+
+    # Adiciona campos opcionais se a tabela suportar
+    campos_opcionais = {
+        "qtde_questoes":   dados.get("quantidade_total"),
+        "duracao_minutos": dados.get("tempo_minutos"),
+        "status":          "rascunho",
+    }
+    for campo, valor in campos_opcionais.items():
+        if valor is not None:
+            payload[campo] = valor
+
+    try:
+        disciplina = buscar_ou_criar_disciplina(dados["disciplina"])
+        payload["disciplina_id"] = disciplina["id"]
+    except Exception:
+        pass
+
     resposta = (
         supabase
         .table("mini_provas")
-        .insert({
-            "professor_id": professor["usuario_uuid"],  # FK aponta para usuario_uuid
-            "disciplina_id": disciplina["id"],
-            "titulo": dados["titulo"],
-            "descricao": dados["assunto"],
-            "quantidade_questoes": dados["quantidade_total"],  # Corrigido de 'qtde_questoes'
-            "duracao_minutos": dados["tempo_minutos"],
-            "status": "rascunho"
-        })
+        .insert(payload)
         .execute()
     )
-
     return resposta.data
 
 
@@ -139,7 +129,7 @@ def listar_mini_provas():
         .select("*")
         .execute()
     )
-    return resposta.data
+    return resposta.data or []
 
 
 def listar_perguntas():
@@ -149,7 +139,7 @@ def listar_perguntas():
         .select("*")
         .execute()
     )
-    return resposta.data
+    return resposta.data or []
 
 
 def buscar_pergunta(id_pergunta):
@@ -160,18 +150,15 @@ def buscar_pergunta(id_pergunta):
         .eq("id", id_pergunta)
         .execute()
     )
-
     if resposta.data:
         return resposta.data[0]
-
     return None
 
 
 def atualizar_pergunta(id_pergunta, dados):
-    # Correção: coluna 'nivel_dificuldade'
     supabase.table("questoes").update({
         "enunciado": dados["enunciado"],
-        "nivel_dificuldade": dados["nivel"]  # Corrigido de 'nivel'
+        "nivel":     dados["nivel"]
     }).eq("id", id_pergunta).execute()
 
 
@@ -187,52 +174,19 @@ def buscar_mini_prova(id_mini_prova):
         .eq("id", id_mini_prova)
         .execute()
     )
-
     if resposta.data:
         return resposta.data[0]
-
     return None
 
 
 def atualizar_mini_prova(id_mini_prova, dados):
-    # Correção: coluna 'quantidade_questoes'
-    supabase.table("mini_provas").update({
-        "titulo": dados["titulo"],
-        "descricao": dados["descricao"],
-        "quantidade_questoes": dados["qtde_questoes"],  # Corrigido de 'qtde_questoes'
-        "duracao_minutos": dados["duracao_minutos"]
-    }).eq("id", id_mini_prova).execute()
+    payload = {}
+    for campo in ["titulo", "descricao", "qtde_questoes", "duracao_minutos"]:
+        if campo in dados:
+            payload[campo] = dados[campo]
+    if payload:
+        supabase.table("mini_provas").update(payload).eq("id", id_mini_prova).execute()
 
 
 def excluir_mini_prova(id_mini_prova):
     supabase.table("mini_provas").delete().eq("id", id_mini_prova).execute()
-
-def listar_perguntas_professor(email_professor):
-
-    professor = buscar_professor_por_email(
-        email_professor
-    )
-
-    if not professor:
-        return []
-
-    resposta = (
-        supabase
-        .table("questoes")
-        .select("""
-            *,
-            disciplinas(nome),
-            temas(nome)
-        """)
-        .eq(
-            "professor_id",
-            professor["id"]
-        )
-        .order(
-            "created_at",
-            desc=True
-        )
-        .execute()
-    )
-
-    return resposta.data
