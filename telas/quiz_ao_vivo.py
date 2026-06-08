@@ -1,4 +1,5 @@
 import streamlit as st
+from utils.estilo import aplicar_estilo, cabecalho  # Importacao do seu CSS global
 
 from services.quiz_ao_vivo_service import (
     criar_quiz,
@@ -14,10 +15,16 @@ from services.quiz_ao_vivo_service import (
 
 
 def tela_quiz_ao_vivo():
+    # Injeta os estilos do projeto e o topo padronizado
+    aplicar_estilo()
+
     usuario = st.session_state.get("usuario_logado", {})
     tipo = usuario.get("tipo_usuario", "aluno")
 
-    st.title("Quiz ao Vivo")
+    cabecalho(
+        "Quiz ao Vivo",
+        "Responda as perguntas em tempo real ou gerencie as rodadas ativas"
+    )
 
     if tipo == "professor":
         st.subheader("Criar Quiz")
@@ -103,7 +110,6 @@ def tela_quiz_ao_vivo():
 
         with col_proxima:
             if st.button("Proxima Pergunta", width="stretch"):
-                # Parêntese corrigido e fechado corretamente aqui:
                 resultado = avancar_pergunta(
                     quiz_id_controle,
                     usuario.get("id"),
@@ -133,10 +139,18 @@ def tela_quiz_ao_vivo():
 
         quiz = repo_get_quiz(quiz_id_controle)
         if quiz:
-            st.info(
-                f"Status: {quiz.get('status')} | "
-                f"Pergunta atual: {quiz.get('pergunta_atual')}"
-            )
+            st.markdown(f"""
+            <div style="
+                background: #f0f9ff;
+                border-left: 4px solid #00b4d8;
+                border-radius: 8px;
+                padding: 12px 16px;
+                margin-top: 15px;
+            ">
+                <span style="color: #0d1b2a; font-weight: 600;">Status Atual: {quiz.get('status', '-')}</span><br>
+                <span style="color: #555; font-size: 13px;">Pergunta Atual (Indice): {quiz.get('pergunta_atual', '-')}</span>
+            </div>
+            """, unsafe_allow_html=True)
 
     else:
         quiz_id = st.number_input(
