@@ -1,5 +1,4 @@
 import streamlit as st
-
 from services.quiz_ao_vivo_service import (
     criar_quiz,
     adicionar_pergunta,
@@ -11,245 +10,162 @@ from services.quiz_ao_vivo_service import (
     avancar_pergunta,
     repo_get_quiz,
 )
+from utils.estilo import aplicar_estilo, cabecalho
 
 
 def tela_quiz_ao_vivo():
-    usuario = st.session_state.usuario_logado
-    tipo = usuario["tipo_usuario"]
 
-    st.title("Quiz ao Vivo")
+    aplicar_estilo()
+
+    usuario = st.session_state.usuario_logado
+    tipo    = usuario["tipo_usuario"]
+
+    cabecalho("Quiz ao Vivo", "Participe ou gerencie quizzes em tempo real")
 
     if tipo == "professor":
-        st.subheader("Criar Quiz")
-
-        titulo = st.text_input("Titulo do Quiz")
-
-        if st.button("Criar Quiz"):
-            resultado = criar_quiz(titulo, usuario["id"])
-
-            if resultado["sucesso"]:
-                st.success("Quiz criado com sucesso!")
-            else:
-                st.error(resultado["mensagem"])
-
-        st.subheader("Adicionar Pergunta")
-
-        quiz_id = st.number_input(
-            "ID do Quiz",
-            min_value=1,
-            key="quiz_pergunta",
-        )
-
-        texto = st.text_area("Pergunta")
-
-        alt1 = st.text_input("Alternativa A")
-        alt2 = st.text_input("Alternativa B")
-        alt3 = st.text_input("Alternativa C")
-        alt4 = st.text_input("Alternativa D")
-
-        alternativas = [alt1, alt2, alt3, alt4]
-
-        letra_correta = st.selectbox(
-            "Alternativa Correta",
-            ["A", "B", "C", "D"],
-        )
-
-        mapa = {
-            "A": 0,
-            "B": 1,
-            "C": 2,
-            "D": 3,
-        }
-
-        indice = mapa[letra_correta]
-
-        if st.button("Adicionar Pergunta"):
-            resultado = adicionar_pergunta(
-                quiz_id,
-                usuario["id"],
-                texto,
-                alternativas,
-                indice,
-            )
-
-            if resultado["sucesso"]:
-                st.success(f"Pergunta adicionada com sucesso ao Quiz {quiz_id}")
-            else:
-                st.error(resultado["mensagem"])
-
-        st.subheader("Controlar Quiz")
-
-        quiz_id_controle = st.number_input(
-            "Quiz para controlar",
-            min_value=1,
-            key="quiz_controle",
-        )
-
-        col_iniciar, col_proxima, col_finalizar = st.columns(3)
-
-        with col_iniciar:
-            if st.button("Iniciar Quiz"):
-                resultado = alterar_status_quiz(
-                    quiz_id_controle,
-                    usuario["id"],
-                    "iniciado",
-                )
-
-                if resultado["sucesso"]:
-                    st.success("Quiz iniciado!")
-                    st.rerun()
-                else:
-                    st.error(resultado["mensagem"])
-
-        with col_proxima:
-            if st.button("Proxima Pergunta"):
-                resultado = avancar_pergunta(
-                    quiz_id_controle,
-                    usuario["id"],
-                )
-
-                if resultado["sucesso"]:
-                    pergunta_atual = resultado["dados"].get("pergunta_atual")
-                    st.success(f"Pergunta atual: {pergunta_atual}")
-                    st.rerun()
-                else:
-                    st.error(resultado["mensagem"])
-
-        with col_finalizar:
-            if st.button("Finalizar Quiz"):
-                resultado = alterar_status_quiz(
-                    quiz_id_controle,
-                    usuario["id"],
-                    "finalizado",
-                )
-
-                if resultado["sucesso"]:
-                    st.success("Quiz finalizado!")
-                    st.rerun()
-                else:
-                    st.error(resultado["mensagem"])
-
-        quiz = repo_get_quiz(quiz_id_controle)
-        if quiz:
-            st.info(
-                f"Status: {quiz.get('status')} | "
-                f"Pergunta atual: {quiz.get('pergunta_atual')}"
-            )
-
+        _tela_professor(usuario)
     else:
-        quiz_id = st.number_input(
-            "ID do Quiz",
-            min_value=1,
-            key="quiz_aluno",
-        )
+        _tela_aluno(usuario)
 
-        if st.button("Entrar no Quiz"):
-            resultado = entrar_quiz(usuario["id"], quiz_id)
 
+# --------------------------------------------------
+# PROFESSOR
+# --------------------------------------------------
+def _tela_professor(usuario):
+    abas = st.tabs(["Criar Quiz", "Adicionar Pergunta", "Controlar Quiz"])
+
+    with abas[0]:
+        st.markdown("### Novo Quiz")
+        with st.container(border=True):
+            titulo = st.text_input("Título do Quiz")
+            if st.button("Criar Quiz", use_container_width=True):
+                resultado = criar_quiz(titulo, usuario["id"])
+                if resultado["sucesso"]:
+                    st.success("Quiz criado com sucesso!")
+                else:
+                    st.error(resultado["mensagem"])
+
+    with abas[1]:
+        st.markdown("### Adicionar Pergunta")
+        with st.container(border=True):
+            quiz_id = st.number_input("ID do Quiz", min_value=1, key="quiz_pergunta")
+            texto   = st.text_area("Pergunta")
+            col1, col2 = st.columns(2)
+            with col1:
+                alt1 = st.text_input("Alternativa A")
+                alt2 = st.text_input("Alternativa B")
+            with col2:
+                alt3 = st.text_input("Alternativa C")
+                alt4 = st.text_input("Alternativa D")
+            alternativas    = [alt1, alt2, alt3, alt4]
+            letra_correta   = st.selectbox("Alternativa Correta", ["A", "B", "C", "D"])
+            mapa            = {"A": 0, "B": 1, "C": 2, "D": 3}
+            indice_correto  = mapa[letra_correta]
+            if st.button("Adicionar Pergunta", use_container_width=True):
+                resultado = adicionar_pergunta(quiz_id, texto, alternativas, indice_correto)
+                if resultado["sucesso"]:
+                    st.success("Pergunta adicionada!")
+                else:
+                    st.error(resultado["mensagem"])
+
+    with abas[2]:
+        st.markdown("### Controlar Quiz")
+        with st.container(border=True):
+            quiz_id_ctrl = st.number_input("ID do Quiz", min_value=1, key="quiz_ctrl")
+            col1, col2, col3 = st.columns(3)
+            with col1:
+                if st.button("Abrir", use_container_width=True):
+                    alterar_status_quiz(quiz_id_ctrl, "aberto")
+                    st.success("Quiz aberto!")
+            with col2:
+                if st.button("Fechar", use_container_width=True):
+                    alterar_status_quiz(quiz_id_ctrl, "fechado")
+                    st.success("Quiz fechado!")
+            with col3:
+                if st.button("Avançar Pergunta", use_container_width=True):
+                    avancar_pergunta(quiz_id_ctrl)
+                    st.success("Pergunta avançada!")
+
+        st.markdown("### Ranking")
+        quiz_id_rank = st.number_input("ID do Quiz para ranking", min_value=1, key="quiz_rank")
+        if st.button("Ver Ranking", use_container_width=True):
+            ranking = obter_ranking(quiz_id_rank)
+            _mostrar_ranking(ranking)
+
+
+# --------------------------------------------------
+# ALUNO
+# --------------------------------------------------
+def _tela_aluno(usuario):
+    with st.container(border=True):
+        st.markdown("### Entrar no Quiz")
+        quiz_id = st.number_input("ID do Quiz", min_value=1, key="quiz_aluno")
+        if st.button("Entrar", use_container_width=True):
+            resultado = entrar_quiz(quiz_id, usuario["id"])
             if resultado["sucesso"]:
-                st.session_state[f"participacao_quiz_{quiz_id}"] = (
-                    resultado["dados"]["id"]
-                )
-                st.success("Voce entrou no quiz.")
-                st.rerun()
+                st.session_state.quiz_ativo = quiz_id
+                st.success("Você entrou no quiz!")
             else:
                 st.error(resultado["mensagem"])
 
-        st.button("Atualizar pergunta", key=f"atualizar_quiz_{quiz_id}")
-
-        participacao_id = st.session_state.get(f"participacao_quiz_{quiz_id}")
-
-        if participacao_id:
-            quiz = repo_get_quiz(quiz_id)
-
-            if not quiz:
-                st.error("Quiz nao encontrado.")
-                st.stop()
-
-            if quiz.get("status") == "finalizado":
-                st.success("Quiz encerrado!")
-                _mostrar_ranking(quiz_id)
-                st.stop()
-
-            pergunta_atual = quiz.get("pergunta_atual")
-
-            if quiz.get("status") != "iniciado" or pergunta_atual is None:
-                st.info("Aguardando o professor iniciar o quiz.")
-                st.stop()
-
-            resultado = obter_perguntas_quizaovivo(quiz_id)
-
-            if not resultado["sucesso"]:
-                st.error(resultado.get("mensagem", "Erro ao carregar perguntas"))
-                st.stop()
-
-            perguntas = resultado["dados"]
-            indice_atual = int(pergunta_atual)
-
-            if indice_atual < 0 or indice_atual >= len(perguntas):
-                st.success("Quiz encerrado!")
-                _mostrar_ranking(quiz_id)
-                st.stop()
-
-            pergunta = perguntas[indice_atual]
-            alternativas = pergunta.get("alternativas") or []
-
-            if not alternativas:
-                st.error("Pergunta sem alternativas.")
-                st.stop()
-
-            st.subheader(f"Pergunta {indice_atual + 1} de {len(perguntas)}")
-
-            escolha = st.radio(
-                pergunta["texto"],
-                alternativas,
-                key=f"quiz_{quiz_id}_pergunta_{pergunta['id']}",
-            )
-
-            if st.button("Responder", key=f"resp_{quiz_id}_{pergunta['id']}"):
-                indice_resposta = alternativas.index(escolha)
-
-                retorno = responder_pergunta(
-                    participacao_id,
-                    pergunta["id"],
-                    indice_resposta,
-                )
-
-                if retorno["sucesso"]:
-                    st.success(retorno["dados"]["feedback"])
-                    st.info(
-                        f"Sua pontuacao: "
-                        f"{retorno['dados']['pontuacao']} pontos"
-                    )
+    if st.session_state.get("quiz_ativo"):
+        quiz_id = st.session_state.quiz_ativo
+        st.divider()
+        st.markdown("### Perguntas")
+        perguntas = obter_perguntas_quizaovivo(quiz_id)
+        if perguntas:
+            p = perguntas[0]
+            st.markdown(f"""
+            <div style="
+                background:#f0f9ff;
+                border-left:4px solid #00b4d8;
+                border-radius:8px;
+                padding:14px 18px;
+                margin-bottom:12px;
+            ">
+                <strong style="color:#0d1b2a;">{p.get('texto','')}</strong>
+            </div>
+            """, unsafe_allow_html=True)
+            alternativas = p.get("alternativas", [])
+            resposta     = st.radio("Escolha uma alternativa", alternativas, key=f"resp_{p.get('id')}")
+            indice       = alternativas.index(resposta) if resposta in alternativas else 0
+            if st.button("Responder", use_container_width=True):
+                resultado = responder_pergunta(quiz_id, p.get("id"), usuario["id"], indice)
+                if resultado["sucesso"]:
+                    st.success("Resposta enviada!")
                 else:
-                    st.error(retorno["mensagem"])
+                    st.error(resultado["mensagem"])
+        else:
+            st.info("Aguardando pergunta do professor...")
 
         st.divider()
-
-    quiz_ranking = st.number_input(
-        "Quiz Ranking",
-        min_value=1,
-        key="ranking",
-    )
-
-    if st.button("Ver Ranking"):
-        _mostrar_ranking(quiz_ranking)
+        st.markdown("### Ranking")
+        ranking = obter_ranking(quiz_id)
+        _mostrar_ranking(ranking)
 
 
-def _mostrar_ranking(quiz_id):
-    resultado = obter_ranking(quiz_id)
-
-    if resultado["sucesso"]:
-        st.subheader("Ranking")
-
-        for posicao, jogador in enumerate(resultado["dados"], start=1):
-            usuario = jogador.get("usuarios") or {}
-            nome = usuario.get("nome", "Aluno")
-
-            st.write(
-                f"{posicao} lugar - "
-                f"{nome} - "
-                f"{jogador['pontuacao']} pontos"
-            )
-    else:
-        st.error(resultado["mensagem"])
+# --------------------------------------------------
+# RANKING
+# --------------------------------------------------
+def _mostrar_ranking(ranking):
+    if not ranking:
+        st.info("Sem pontuações ainda.")
+        return
+    cores = ["#FFD700", "#C0C0C0", "#CD7F32"]
+    for i, r in enumerate(ranking):
+        cor = cores[i] if i < 3 else "#00b4d8"
+        pos = ["1º", "2º", "3º"][i] if i < 3 else f"{i+1}º"
+        st.markdown(f"""
+        <div style="
+            background:#f0f9ff;
+            border-left:4px solid {cor};
+            border-radius:8px;
+            padding:10px 16px;
+            margin-bottom:6px;
+            display:flex;
+            justify-content:space-between;
+        ">
+            <strong style="color:#0d1b2a;">{pos} — {r.get('nome','')}</strong>
+            <span style="color:{cor}; font-weight:700;">{r.get('pontuacao',0)} pts</span>
+        </div>
+        """, unsafe_allow_html=True)
