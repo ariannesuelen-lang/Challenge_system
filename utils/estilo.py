@@ -50,7 +50,7 @@ def aplicar_estilo():
         .stApp [data-testid="stMarkdownContainer"] span,
         .stApp .stText,
         .stApp label {
-            color: #ffffff !important;
+            color: #0d1b2a !important;
         }
 
         /* ----- BOTOES GLOBAIS (ciano) ----- */
