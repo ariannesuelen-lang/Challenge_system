@@ -6,7 +6,17 @@ from components.navbar import mostrar_menu
 from telas.login import tela_login
 from telas.cadastro import tela_cadastro
 from telas.home import tela_home
-from telas.quiz_ao_vivo import tela_quiz_ao_vivo
+try:
+    from telas.quiz_ao_vivo import tela_quiz_ao_vivo
+except ImportError:
+    try:
+        # Tenta importar caso o arquivo ou pasta tenha iniciado com letra maiúscula no Git
+        from telas.Quiz_Ao_Vivo import tela_quiz_ao_vivo
+    except ImportError:
+        # Fallback de segurança para o app não crashar na inicialização
+        def tela_quiz_ao_vivo():
+            import streamlit as st
+            st.error("Erro ao carregar a tela de Quiz. Verifique o nome do arquivo no repositório.")
 from telas.votacao import tela_votacao
 from telas.voto import tela_voto
 from telas.desafios import tela_desafios
