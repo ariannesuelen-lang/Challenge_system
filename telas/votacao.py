@@ -2,35 +2,29 @@ import streamlit as st
 from services.desafio_service import listar_desafios
 from utils.estilo import aplicar_estilo, cabecalho
 
-# Tentativa de importação dinâmica para evitar que o app trave por nomes diferentes
+# Tentativa segura de importar as funcoes de voto
 try:
     from services.votacao_service import listar_votos, registrar_voto
 except ImportError:
     try:
-        # Nome alternativo comum em sistemas baseados em repositório
         from services.votacao_service import obter_votos as listar_votos, registrar_voto
     except ImportError:
-        try:
-            from services.votacao_service import get_votos as listar_votos, registrar_voto
-        except ImportError:
-            # Fallback caso apenas o registrar_voto exista isolado
-            from services.votacao_service import registrar_voto
-            def listar_votos():
-                return []
+        from services.votacao_service import registrar_voto
+        def listar_votos():
+            return []
 
 
 def tela_votacao():
+    # Injeta as configuracoes do seu CSS global
     aplicar_estilo()
 
     usuario = st.session_state.get("usuario_logado", {})
-    desafios = listar_desafios()
+    tipo = usuario.get("tipo_usuario", "aluno")
 
     cabecalho(
         "Sistema de Votacao",
         "Vote nos melhores projetos ou gerencie as votacoes ativas"
     )
-
-    tipo = usuario.get("tipo_usuario", "aluno")
 
     if tipo == "professor":
         st.subheader("Gerenciamento de Votos")
@@ -53,26 +47,46 @@ def tela_votacao():
                     """, unsafe_allow_html=True)
             else:
                 st.info("Nenhum voto registrado ate o momento.")
+                
     else:
-        st.subheader("Escolha um Desafio para Votar")
+        st.subheader("Pesquisar e Votar")
         
-        if desafios:
-            opcoes_desafios = {d['titulo']: d['id'] for d in desafios}
-            escolha_titulo = st.selectbox("Selecione o desafio:", list(opcoes_desafios.keys()))
-            desafio_id = opcoes_desafios[escolha_titulo]
+        pesquisa = st.text_input("Pesquisar desafio por titulo")
+        desafios = listar_desafios()
 
-            aluno_id = st.number_input("ID do Aluno Autor do Projeto", min_value=1, step=1)
+        # Filtro de busca por texto que voce criou na versao antiga
+        if pesquisa and desafios:
+            desafios = [
+                d for d in desafios
+                if pesquisa.lower() in d.get("titulo", "").lower()
+            ]
 
-            if st.button("Confirmar Voto", width="stretch"):
-                if aluno_id == usuario.get("id"):
-                    st.error("Voce nao pode votar no seu proprio projeto.")
-                else:
-                    resultado = registrar_voto(desafio_id, aluno_id)
-                    if isinstance(resultado, dict) and resultado.get("sucesso"):
-                        st.success("Seu voto foi registrado com sucesso!")
-                    elif isinstance(resultado, dict):
-                        st.error(resultado.get("mensagem", "Erro ao registrar voto."))
+        if not desafios:
+            st.warning("Nenhum desafio encontrado")
+            return
+
+        # Renderiza os desafios usando o container com borda estruturado pelo seu CSS
+        for desafio in desafios:
+            with st.container(border=True):
+                st.subheader(desafio.get("titulo", "Sem Titulo"))
+                st.write(f"Prazo final: {desafio.get('data_limite', 'Nao informado')}")
+                
+                # Input para o aluno votar diretamente aqui
+                aluno_id = st.number_input(
+                    "ID do Aluno Autor do Projeto", 
+                    min_value=1, 
+                    step=1, 
+                    key=f"aluno_id_{desafio.get('id')}"
+                )
+
+                if st.button("Confirmar Voto", key=f"voto_{desafio.get('id')}", width="stretch"):
+                    if aluno_id == usuario.get("id"):
+                        st.error("Voce nao pode votar no seu proprio projeto.")
                     else:
-                        st.success("Operacao de votacao concluida.")
-        else:
-            st.info("Nenhum desafio disponivel para votacao no momento.")
+                        resultado = registrar_voto(desafio.get("id"), aluno_id)
+                        if isinstance(resultado, dict) and resultado.get("sucesso"):
+                            st.success("Seu voto foi registrado com sucesso!")
+                        elif isinstance(resultado, dict):
+                            st.error(resultado.get("mensagem", "Erro ao registrar voto."))
+                        else:
+                            st.success("Operacao de votacao concluida.")
