@@ -1,7 +1,8 @@
 import streamlit as st
 
 from services.mini_prova_service import (
-    criar_pergunta
+    criar_pergunta,
+    listar_perguntas_professor
 )
 
 
@@ -67,50 +68,117 @@ def tela_cadastro_perguntas():
         "Cadastrar pergunta"
     ):
 
-        usuario = (
-            st.session_state.usuario_logado
-        )
-
         dados = {
 
-            "email_professor":
-            usuario["email"],
+            "email_professor": (
+                st.session_state
+                .usuario_logado["email"]
+            ),
 
-            "disciplina":
-            disciplina,
+            "disciplina": disciplina,
 
-            "assunto":
-            assunto,
+            "assunto": assunto,
 
-            "enunciado":
-            pergunta,
+            "enunciado": pergunta,
 
-            "nivel":
-            dificuldade,
+            "nivel": dificuldade,
 
-            "alternativa_a":
-            alternativa_a,
+            "alternativa_a": alternativa_a,
+            "alternativa_b": alternativa_b,
+            "alternativa_c": alternativa_c,
+            "alternativa_d": alternativa_d,
+            "alternativa_e": alternativa_e,
 
-            "alternativa_b":
-            alternativa_b,
-
-            "alternativa_c":
-            alternativa_c,
-
-            "alternativa_d":
-            alternativa_d,
-
-            "alternativa_e":
-            alternativa_e,
-
-            "resposta_correta":
-            resposta_correta
+            "resposta_correta": (
+                resposta_correta
+            )
         }
 
         criar_pergunta(dados)
 
         st.success(
             "Pergunta cadastrada"
+        )
+
+        st.rerun()
+
+    st.divider()
+
+    st.subheader(
+        "Perguntas cadastradas"
+    )
+
+    perguntas = listar_perguntas_professor(
+        st.session_state.usuario_logado[
+            "email"
+        ]
+    )
+
+    if perguntas:
+
+        for pergunta in perguntas:
+
+            with st.container(border=True):
+
+                st.write(
+                    pergunta["enunciado"]
+                )
+
+                disciplina_nome = (
+                    pergunta["disciplinas"]
+                    ["nome"]
+                )
+
+                tema_nome = (
+                    pergunta["temas"]
+                    ["nome"]
+                )
+
+                st.caption(
+                    f"{disciplina_nome} • {tema_nome}"
+                )
+
+                st.write(
+                    f"Dificuldade: "
+                    f"{pergunta['nivel']}"
+                )
+
+                col1, col2 = st.columns(2)
+
+                with col1:
+
+                    if st.button(
+                        "Editar",
+                        key=f"editar_"
+                        f"{pergunta['id']}"
+                    ):
+
+                        st.session_state[
+                            "pergunta_edicao"
+                        ] = pergunta
+
+                        st.session_state.pagina = (
+                            "editar_pergunta"
+                        )
+
+                        st.rerun()
+
+                with col2:
+
+                    if st.button(
+                        "Excluir",
+                        key=f"excluir_"
+                        f"{pergunta['id']}"
+                    ):
+
+                        st.warning(
+                            "Função será criada"
+                        )
+
+    else:
+
+        st.info(
+            "Nenhuma pergunta cadastrada"
         )
 
     st.divider()
