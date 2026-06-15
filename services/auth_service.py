@@ -5,14 +5,14 @@ from database.conexao import supabase
 
 
 def criptografar_senha(senha):
-
+    """Cria um hash SHA-256 seguro a partir da senha em texto limpo."""
     return hashlib.sha256(
         senha.encode()
     ).hexdigest()
 
 
 def senha_valida(senha):
-
+    """Valida as regras de complexidade exigidas para a senha."""
     if len(senha) < 8:
         return "A senha deve ter no mínimo 8 caracteres"
 
@@ -26,7 +26,7 @@ def senha_valida(senha):
 
 
 def login_usuario(email, senha):
-
+    """Realiza a busca do usuário no banco com base no e-mail e hash da senha."""
     resposta = (
         supabase
         .table("usuarios")
@@ -48,14 +48,14 @@ def cadastrar_usuario(
     tipo_usuario,
     senha
 ):
-
+    """Efetua o cadastro do novo usuário diretamente na tabela unificada."""
     try:
-
+        # 1. Valida as regras de complexidade da senha
         validar = senha_valida(senha)
-
         if validar != "ok":
             return validar
 
+        # 2. Verifica se o e-mail já existe na tabela única
         verificar = (
             supabase
             .table("usuarios")
@@ -67,6 +67,7 @@ def cadastrar_usuario(
         if verificar.data:
             return "E-mail já cadastrado"
 
+        # 3. Insere o novo registro centralizado na tabela 'usuarios'
         supabase.table(
             "usuarios"
         ).insert({
@@ -76,26 +77,8 @@ def cadastrar_usuario(
             "senha": criptografar_senha(senha)
         }).execute()
 
-        if tipo_usuario == "professor":
-
-            supabase.table(
-                "professores"
-            ).insert({
-                "nome": nome,
-                "email": email
-            }).execute()
-
-        elif tipo_usuario == "aluno":
-
-            supabase.table(
-                "alunos"
-            ).insert({
-                "nome": nome,
-                "email": email
-            }).execute()
-
+        # ✅ Correção: Removidos os espelhamentos para as tabelas antigas 'professores' e 'alunos'
         return "ok"
 
     except Exception as erro:
-
         return f"Erro ao cadastrar usuário: {erro}"
