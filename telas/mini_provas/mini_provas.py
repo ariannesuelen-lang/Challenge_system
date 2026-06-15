@@ -1,11 +1,10 @@
-# telas/mini_provas/mini_provas.py
 import streamlit as st
-# 🌟 ALTERADO: Puxando a instância única global do serviço
-from services import mini_prova_service
+from services.mini_prova_service import listar_mini_provas
 from utils.estilo import aplicar_estilo, cabecalho
 
 
 def tela_mini_provas():
+
     aplicar_estilo()
 
     if "alto_contraste" not in st.session_state:
@@ -34,10 +33,8 @@ def tela_mini_provas():
             st.checkbox("Leitura por questão")
             st.divider()
             st.subheader("Solicitar tempo extra")
-            
-            # 🌟 ALTERADO: Chamada via método da classe de serviço
-            mini_provas_lista = mini_prova_service.listar_mini_provas()
-            nomes = [p["titulo"] for p in mini_provas_lista] if mini_provas_lista else ["Nenhuma prova disponível"]
+            mini_provas_lista = listar_mini_provas()
+            nomes = [p["titulo"] for p in mini_provas_lista] if mini_provas_lista else ["Mini prova 1", "Mini prova 2"]
             st.selectbox("Mini prova", nomes)
             st.text_area("Justificativa")
             if st.button("Enviar solicitação"):
@@ -52,6 +49,7 @@ def tela_mini_provas():
         """, unsafe_allow_html=True)
 
     st.divider()
+
     pesquisa = st.text_input("Pesquisar mini prova")
 
     col1, col2 = st.columns(2)
@@ -59,14 +57,13 @@ def tela_mini_provas():
         st.markdown("### Mini Provas Disponíveis")
     with col2:
         if st.button("Resultados", use_container_width=True):
-            st.session_state.pagina = "historico_provas"
+            st.session_state.pagina = "resultados_mini_provas"
             st.rerun()
 
-    # 🌟 ALTERADO: Listagem usando o serviço centralizado
-    mini_provas = mini_prova_service.listar_mini_provas()
+    mini_provas = listar_mini_provas()
 
     if pesquisa:
-        mini_provas = [p for p in mini_provas if pesquisa.lower() in p.get("titulo", "").lower()]
+        mini_provas = [p for p in mini_provas if pesquisa.lower() in p["titulo"].lower()]
 
     if not mini_provas:
         st.info("Nenhuma mini prova disponível.")
@@ -81,9 +78,9 @@ def tela_mini_provas():
             padding:14px 18px;
             margin-bottom:10px;
         ">
-            <strong style="color:#0d1b2a; font-size:15px;">{prova.get('titulo', 'Sem título')}</strong><br>
-            <span style="color:#555; font-size:13px;">{prova.get('descricao','Sem descrição cadastrada.')}</span><br>
-            <span style="color:#00b4d8; font-size:12px;">Criada em: {prova.get('criado_em','-')}</span>
+            <strong style="color:#0d1b2a; font-size:15px;">{prova['titulo']}</strong><br>
+            <span style="color:#555; font-size:13px;">{prova.get('descricao','')}</span><br>
+            <span style="color:#00b4d8; font-size:12px;">Criada em: {prova.get('data_criacao','')}</span>
         </div>
         """, unsafe_allow_html=True)
         if st.button(f"Fazer prova", key=f"fazer_{prova['id']}", use_container_width=False):

@@ -1,10 +1,7 @@
 import streamlit as st
 
-def mostrar_menu():
-    # Garante que não quebrará se a sessão estiver fria ou limpando o cache
-    if "usuario_logado" not in st.session_state or st.session_state.usuario_logado is None:
-        return
 
+def mostrar_menu():
     pagina_atual = st.session_state.get("pagina", "home")
     usuario      = st.session_state.usuario_logado
 
@@ -53,7 +50,7 @@ def mostrar_menu():
         ("Batalha de Equipes", "batalha_de_equipes",  "menu_batalha_de_equipes"),
     ]
 
-    # Validação baseada estritamente na coluna unificada do banco (tipo_usuario)
+    # Evita quebrar se o dicionário de usuário não estiver completamente povoado
     if usuario and usuario.get("tipo_usuario") == "admin":
         menu_items.append(("Admin", "admin", "menu_admin"))
 

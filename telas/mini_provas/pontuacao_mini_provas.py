@@ -1,8 +1,9 @@
-# telas/mini_provas/pontuacao_mini_provas.py
 import streamlit as st
 from utils.estilo import aplicar_estilo, cabecalho
 
+
 def tela_pontuacao_mini_provas():
+
     aplicar_estilo()
     cabecalho("Minha Pontuação", "Veja seu desempenho nas mini-provas")
 
@@ -37,6 +38,5 @@ def tela_pontuacao_mini_provas():
 
     st.divider()
     if st.button("Voltar"):
-        # 🌟 ALTERADO: Navegação limpa via state
         st.session_state.pagina = "mini_provas"
         st.rerun()

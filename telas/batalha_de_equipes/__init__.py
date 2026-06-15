@@ -1,1 +1,0 @@
-from .batalha_de_equipes import tela_batalha_de_equipes
