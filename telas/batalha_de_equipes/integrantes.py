@@ -1,9 +1,6 @@
+# telas/batalha_de_equipes/integrantes.py
 import streamlit as st
-from database.conexao import supabase
-from services.batalha_de_equipes_service import (
-    listar_times, listar_membros_time, listar_alunos,
-    adicionar_aluno, remover_aluno, mover_aluno
-)
+from services import batalha_service
 from utils.estilo import aplicar_estilo, cabecalho
 
 
@@ -34,120 +31,65 @@ def tela_batalha_integrantes():
     try:
         user_id = int(user_id)
     except (TypeError, ValueError):
-        st.error("Sessao invalida.")
+        st.error("Sessão inválida.")
         return
 
+    # --------------------------------------------------
+    # VISÃO DO PROFESSOR (GERENCIAMENTO GLOBAL)
+    # --------------------------------------------------
     if tipo == "professor":
-        times = listar_times()
+        times = batalha_service.listar_times()
         if not times:
             st.warning("Nenhum time cadastrado.")
             return
-        mapa = {
+
+        mapa_times_geral = {
             t.get("nome"): t.get("id")
             for t in times
             if isinstance(t, dict) and t.get("nome") and t.get("id")
         }
-        if not mapa:
-            st.warning("Times com dados invalidos.")
-            return
-        sel     = st.selectbox("Selecione o time", list(mapa.keys()))
-        time_id = mapa[sel]
 
-    else:
-        res  = supabase.table("time_membros") \
-            .select("time_id, times(id,nome)") \
-            .eq("usuario_id", user_id) \
-            .execute()
-        data = _safe_list(getattr(res, "data", None))
+        nome_time_sel = st.selectbox("Selecione o Time para gerenciar", list(mapa_times_geral.keys()))
+        time_id = mapa_times_geral[nome_time_sel]
 
-        if not data:
-            st.markdown("""
-            <div style="
-                background:#fff3e0;
-                border-left:4px solid #0d1b2a;
-                border-radius:8px;
-                padding:14px 18px;
-            ">
-                <strong style="color:#0d1b2a;">Voce nao participa de nenhum time ainda.</strong>
-            </div>
-            """, unsafe_allow_html=True)
-            if st.button("Entrar em um time"):
-                st.session_state.pagina = "batalha_times"
-                st.rerun()
-            return
+        # Busca os membros do time selecionado através do serviço unificado
+        membros = batalha_service.listar_membros_time(time_id)
 
-        first_row = _safe_dict(data[0])
-        time_info = first_row.get("times")
-        if isinstance(time_info, list):
-            time_info = time_info[0] if time_info else {}
-        time_info = _safe_dict(time_info)
+        st.markdown(f"#### Membros atuais do {nome_time_sel}")
+        if not membros:
+            st.info("Este time ainda não possui membros.")
+        else:
+            for m in membros:
+                st.write(f"- {m.get('nome')} ({m.get('email')})")
 
-        if not time_info.get("id") or not time_info.get("nome"):
-            st.error("Erro ao carregar time.")
-            return
+        st.divider()
 
-        time_id = time_info["id"]
-        st.markdown(f"""
-        <div style="
-            background:#e0f7fa;
-            border-left:4px solid #00b4d8;
-            border-radius:8px;
-            padding:12px 16px;
-            margin-bottom:12px;
-        ">
-            <strong style="color:#0d1b2a;">Seu time: {time_info['nome']}</strong>
-        </div>
-        """, unsafe_allow_html=True)
+        # Aba de Adicionar Aluno
+        with st.expander("Adicionar Aluno ao Time", expanded=False):
+            todos_alunos = batalha_service.listar_alunos()
+            
+            # Filtra alunos que já possuem um time para evitar duplicidade na listagem visual
+            alunos_disponiveis = []
+            for a in todos_alunos:
+                if isinstance(a, dict) and a.get("id") and a.get("nome"):
+                    if not batalha_service.aluno_tem_time(a["id"]):
+                        alunos_disponiveis.append(a)
 
-    st.markdown("### Membros")
-
-    membros = listar_membros_time(time_id)
-
-    if not membros:
-        st.info("Nenhum membro neste time.")
-    else:
-        st.dataframe(
-            membros,
-            column_config={
-                "id":    st.column_config.NumberColumn("ID"),
-                "nome":  st.column_config.TextColumn("Nome"),
-                "email": st.column_config.TextColumn("E-mail"),
-            },
-            use_container_width=True,
-            hide_index=True
-        )
-
-    if tipo != "professor":
-        return
-
-    st.divider()
-    st.markdown("### Gestao de membros")
-
-    col1, col2 = st.columns(2)
-
-    with col1:
-        with st.container(border=True):
-            st.markdown("**Adicionar aluno**")
-            alunos   = listar_alunos()
             mapa_add = {
-                a.get("nome"): a.get("id")
-                for a in alunos
-                if isinstance(a, dict) and a.get("nome") and a.get("id")
+                al.get("nome"): al.get("id") for al in alunos_disponiveis
             }
+
             if mapa_add:
-                sel_add = st.selectbox("Aluno", list(mapa_add.keys()), key="add_aluno")
+                sel_add = st.selectbox("Aluno disponível", list(mapa_add.keys()), key="add_aluno")
                 if st.button("Adicionar", use_container_width=True):
-                    if adicionar_aluno(time_id, mapa_add[sel_add]):
-                        st.success("Aluno adicionado!")
-                    else:
-                        st.warning("Este aluno ja pertence a um time.")
+                    batalha_service.adicionar_aluno(time_id, mapa_add[sel_add])
+                    st.success("Aluno adicionado com sucesso!")
                     st.rerun()
             else:
-                st.info("Nenhum aluno disponivel.")
+                st.info("Todos os alunos cadastrados já possuem um time.")
 
-    with col2:
-        with st.container(border=True):
-            st.markdown("**Remover membro**")
+        # Aba de Remover Aluno
+        with st.expander("Remover Aluno do Time", expanded=False):
             mapa_rm = {
                 m.get("nome"): m.get("id")
                 for m in membros
@@ -156,225 +98,65 @@ def tela_batalha_integrantes():
             if mapa_rm:
                 sel_rm = st.selectbox("Membro", list(mapa_rm.keys()), key="rm_aluno")
                 if st.button("Remover", use_container_width=True):
-                    remover_aluno(time_id, mapa_rm[sel_rm])
+                    batalha_service.remover_aluno(time_id, mapa_rm[sel_rm])
                     st.success("Membro removido.")
                     st.rerun()
             else:
                 st.info("Nenhum membro para remover.")
 
-    st.divider()
+        st.divider()
 
-    with st.expander("Mover aluno para outro time", expanded=False):
-        todos_times = listar_times()
-        mapa_times  = {
-            t.get("nome"): t.get("id")
-            for t in todos_times
-            if isinstance(t, dict) and t.get("nome") and t.get("id")
-        }
-        mapa_mv = {
-            m.get("nome"): m.get("id")
-            for m in membros
-            if isinstance(m, dict) and m.get("nome") and m.get("id")
-        }
-        if mapa_mv and mapa_times:
-            col3, col4 = st.columns(2)
-            with col3:
-                aluno_mv = st.selectbox("Aluno", list(mapa_mv.keys()), key="mover_aluno")
-            with col4:
-                destino  = st.selectbox("Destino", list(mapa_times.keys()), key="mover_destino")
-            if st.button("Mover", use_container_width=True):
-                mover_aluno(mapa_mv[aluno_mv], mapa_times[destino])
-                st.success("Aluno movido!")
-                st.rerun()
-        else:
-            st.info("Sem dados suficientes para mover alunos.")
-import streamlit as st
-from database.conexao import supabase
-from services.batalha_de_equipes_service import (
-    listar_times, listar_membros_time, listar_alunos,
-    adicionar_aluno, remover_aluno, mover_aluno
-)
-from utils.estilo import aplicar_estilo, cabecalho
-
-
-def _safe_dict(v):
-    return v if isinstance(v, dict) else {}
-
-
-def _safe_list(v):
-    return v if isinstance(v, list) else []
-
-
-def tela_batalha_integrantes():
-
-    aplicar_estilo()
-
-    usuario = st.session_state.usuario_logado
-    tipo    = usuario.get("tipo_usuario", "aluno")
-    user_id = usuario.get("id")
-
-    cabecalho("Integrantes dos Times", "Veja e gerencie os membros de cada time")
-
-    if st.button("Voltar"):
-        st.session_state.pagina = "batalha_de_equipes"
-        st.rerun()
-
-    st.divider()
-
-    try:
-        user_id = int(user_id)
-    except (TypeError, ValueError):
-        st.error("Sessao invalida.")
-        return
-
-    if tipo == "professor":
-        times = listar_times()
-        if not times:
-            st.warning("Nenhum time cadastrado.")
-            return
-        mapa = {
-            t.get("nome"): t.get("id")
-            for t in times
-            if isinstance(t, dict) and t.get("nome") and t.get("id")
-        }
-        if not mapa:
-            st.warning("Times com dados invalidos.")
-            return
-        sel     = st.selectbox("Selecione o time", list(mapa.keys()))
-        time_id = mapa[sel]
-
-    else:
-        res  = supabase.table("time_membros") \
-            .select("time_id, times(id,nome)") \
-            .eq("usuario_id", user_id) \
-            .execute()
-        data = _safe_list(getattr(res, "data", None))
-
-        if not data:
-            st.markdown("""
-            <div style="
-                background:#fff3e0;
-                border-left:4px solid #0d1b2a;
-                border-radius:8px;
-                padding:14px 18px;
-            ">
-                <strong style="color:#0d1b2a;">Voce nao participa de nenhum time ainda.</strong>
-            </div>
-            """, unsafe_allow_html=True)
-            if st.button("Entrar em um time"):
-                st.session_state.pagina = "batalha_times"
-                st.rerun()
-            return
-
-        first_row = _safe_dict(data[0])
-        time_info = first_row.get("times")
-        if isinstance(time_info, list):
-            time_info = time_info[0] if time_info else {}
-        time_info = _safe_dict(time_info)
-
-        if not time_info.get("id") or not time_info.get("nome"):
-            st.error("Erro ao carregar time.")
-            return
-
-        time_id = time_info["id"]
-        st.markdown(f"""
-        <div style="
-            background:#e0f7fa;
-            border-left:4px solid #00b4d8;
-            border-radius:8px;
-            padding:12px 16px;
-            margin-bottom:12px;
-        ">
-            <strong style="color:#0d1b2a;">Seu time: {time_info['nome']}</strong>
-        </div>
-        """, unsafe_allow_html=True)
-
-    st.markdown("### Membros")
-
-    membros = listar_membros_time(time_id)
-
-    if not membros:
-        st.info("Nenhum membro neste time.")
-    else:
-        st.dataframe(
-            membros,
-            column_config={
-                "id":    st.column_config.NumberColumn("ID"),
-                "nome":  st.column_config.TextColumn("Nome"),
-                "email": st.column_config.TextColumn("E-mail"),
-            },
-            use_container_width=True,
-            hide_index=True
-        )
-
-    if tipo != "professor":
-        return
-
-    st.divider()
-    st.markdown("### Gestao de membros")
-
-    col1, col2 = st.columns(2)
-
-    with col1:
-        with st.container(border=True):
-            st.markdown("**Adicionar aluno**")
-            alunos   = listar_alunos()
-            mapa_add = {
-                a.get("nome"): a.get("id")
-                for a in alunos
-                if isinstance(a, dict) and a.get("nome") and a.get("id")
-            }
-            if mapa_add:
-                sel_add = st.selectbox("Aluno", list(mapa_add.keys()), key="add_aluno")
-                if st.button("Adicionar", use_container_width=True):
-                    if adicionar_aluno(time_id, mapa_add[sel_add]):
-                        st.success("Aluno adicionado!")
-                    else:
-                        st.warning("Este aluno ja pertence a um time.")
-                    st.rerun()
-            else:
-                st.info("Nenhum aluno disponivel.")
-
-    with col2:
-        with st.container(border=True):
-            st.markdown("**Remover membro**")
-            mapa_rm = {
+        # Aba de Mover Aluno de Grupo
+        with st.expander("Mover aluno para outro time", expanded=False):
+            mapa_mv = {
                 m.get("nome"): m.get("id")
                 for m in membros
                 if isinstance(m, dict) and m.get("nome") and m.get("id")
             }
-            if mapa_rm:
-                sel_rm = st.selectbox("Membro", list(mapa_rm.keys()), key="rm_aluno")
-                if st.button("Remover", use_container_width=True):
-                    remover_aluno(time_id, mapa_rm[sel_rm])
-                    st.success("Membro removido.")
+            if mapa_mv and mapa_times_geral:
+                col3, col4 = st.columns(2)
+                with col3:
+                    aluno_mv = st.selectbox("Aluno", list(mapa_mv.keys()), key="mover_aluno")
+                with col4:
+                    # Filtra o próprio time atual para não aparecer no destino de transferência
+                    destinos_filtrados = {k: v for k, v in mapa_times_geral.items() if v != time_id}
+                    destino = st.selectbox("Time de Destino", list(destinos_filtrados.keys()), key="destino_time")
+                
+                if st.button("Transferir Aluno", use_container_width=True):
+                    batalha_service.mover_aluno(mapa_mv[aluno_mv], destinos_filtrados[destino])
+                    st.success("Aluno transferido de equipe!")
                     st.rerun()
             else:
-                st.info("Nenhum membro para remover.")
+                st.info("Nenhum membro disponível neste time para transferir.")
 
-    st.divider()
+    # --------------------------------------------------
+    # VISÃO DO ALUNO (CONSULTA DO PRÓPRIO TIME)
+    # --------------------------------------------------
+    else:
+        # 🛠️ CORREÇÃO CRÍTICA: Substituído o supabase.table bruto pelo método do Repositório via Service
+        time_id_estudante = batalha_service.obter_time_do_aluno(user_id)
 
-    with st.expander("Mover aluno para outro time", expanded=False):
-        todos_times = listar_times()
-        mapa_times  = {
-            t.get("nome"): t.get("id")
-            for t in todos_times
-            if isinstance(t, dict) and t.get("nome") and t.get("id")
-        }
-        mapa_mv = {
-            m.get("nome"): m.get("id")
-            for m in membros
-            if isinstance(m, dict) and m.get("nome") and m.get("id")
-        }
-        if mapa_mv and mapa_times:
-            col3, col4 = st.columns(2)
-            with col3:
-                aluno_mv = st.selectbox("Aluno", list(mapa_mv.keys()), key="mover_aluno")
-            with col4:
-                destino  = st.selectbox("Destino", list(mapa_times.keys()), key="mover_destino")
-            if st.button("Mover", use_container_width=True):
-                mover_aluno(mapa_mv[aluno_mv], mapa_times[destino])
-                st.success("Aluno movido!")
-                st.rerun()
+        if not time_id_estudante:
+            st.warning("Você ainda não está associado a nenhum time. Vá até a aba 'Times' e escolha uma equipe.")
+            return
+
+        # Puxa a listagem completa para achar o nome textual do time dele
+        todos_os_times = batalha_service.listar_times()
+        registro_time = next((t for t in todos_os_times if t.get("id") == time_id_estudante), None)
+        nome_time_estudante = registro_time.get("nome", "Seu Time") if registro_time else "Seu Time"
+
+        st.markdown(f"### 🛡️ Equipe: **{nome_time_estudante}**")
+        st.write("Abaixo estão os seus colegas de equipe cadastrados na plataforma:")
+
+        # Lista os parceiros de grupo utilizando a inteligência do monólito
+        colegas = batalha_service.listar_membros_time(time_id_estudante)
+
+        if colegas:
+            for c in colegas:
+                # Destaca se o nome listado for o do próprio usuário logado
+                if c.get("id") == user_id:
+                    st.write(f"- **{c.get('nome')} (Você)** — *{c.get('email')}*")
+                else:
+                    st.write(f"- {c.get('nome')} — *{c.get('email')}*")
         else:
-            st.info("Sem dados suficientes para mover alunos.")
+            st.info("Não foi possível carregar os integrantes do seu time.")

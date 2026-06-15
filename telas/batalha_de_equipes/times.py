@@ -1,8 +1,6 @@
+# telas/batalha_de_equipes/times.py
 import streamlit as st
-from services.batalha_de_equipes_service import (
-    listar_times, criar_time, editar_time, deletar_time,
-    aluno_tem_time, entrar_no_time
-)
+from services import batalha_service
 from utils.estilo import aplicar_estilo, cabecalho
 
 
@@ -23,7 +21,7 @@ def tela_batalha_times():
     st.divider()
 
     # --------------------------------------------------
-    # PROFESSOR
+    # FLUXO DO PROFESSOR (CRIAÇÃO E EDIÇÃO DE TIMES)
     # --------------------------------------------------
     if tipo == "professor":
 
@@ -35,76 +33,62 @@ def tela_batalha_times():
                 if not nome or not nome.strip():
                     st.warning("Nome nao pode ser vazio.")
                 else:
-                    if criar_time(nome):
+                    # 🌟 ALTERADO: Chamada via método da classe de serviço
+                    if batalha_service.criar_time(nome):
                         st.success(f"Time '{nome}' criado!")
                         st.rerun()
                     else:
-                        st.error("Erro ao criar time.")
+                        st.error("Erro ao criar o time.")
 
         st.divider()
-        st.markdown("### Times cadastrados")
+        st.markdown("### Times Cadastrados")
 
-        times = listar_times()
+        # 🌟 ALTERADO: Listagem usando a instância global de serviço
+        times = batalha_service.listar_times()
 
         if not times:
             st.info("Nenhum time cadastrado ainda.")
-            return
-
-        for t in times:
-            if not isinstance(t, dict):
-                continue
-            time_id    = t.get("id")
-            nome_atual = t.get("nome", "")
-            if not time_id or not nome_atual:
-                continue
-
-            with st.container(border=True):
-                col_titulo, col_acoes = st.columns([3, 1])
-
-                with col_titulo:
-                    st.markdown(f"""
-                    <div style="
-                        background:#f0f9ff;
-                        border-left:4px solid #00b4d8;
-                        border-radius:6px;
-                        padding:8px 12px;
-                    ">
-                        <strong style="color:#0d1b2a; font-size:16px;">{nome_atual}</strong>
-                    </div>
-                    """, unsafe_allow_html=True)
-
-                with st.expander("Editar / Deletar", expanded=False):
-                    novo_nome = st.text_input(
-                        "Novo nome",
-                        value=nome_atual,
-                        key=f"edit_{time_id}"
-                    )
-                    col1, col2 = st.columns(2)
+        else:
+            for t in times:
+                with st.container(border=True):
+                    col1, col2 = st.columns([3, 1])
                     with col1:
-                        if st.button("Salvar", key=f"salvar_{time_id}", use_container_width=True):
-                            if not novo_nome.strip():
-                                st.warning("Nome nao pode ficar vazio.")
-                            else:
-                                editar_time(time_id, novo_nome)
-                                st.success("Atualizado!")
-                                st.rerun()
+                        st.markdown(f"#### 🛡️ {t.get('nome')}")
                     with col2:
-                        if st.button("Deletar", key=f"deletar_{time_id}", use_container_width=True):
-                            deletar_time(time_id)
-                            st.success("Time removido.")
-                            st.rerun()
+                        # Expander para ações de gerenciamento de cada time
+                        with st.expander("Ações", expanded=False):
+                            novo_nome = st.text_input(
+                                "Novo nome", 
+                                value=t.get("nome"), 
+                                key=f"edit_nome_{t.get('id')}"
+                            )
+                            
+                            col_b1, col_b2 = st.columns(2)
+                            with col_b1:
+                                if st.button("Salvar", key=f"salvar_{t.get('id')}"):
+                                    # 🌟 ALTERADO: Atualização mapeada na Service
+                                    if batalha_service.editar_time(t.get('id'), novo_nome):
+                                        st.success("Atualizado!")
+                                        st.rerun()
+                            with col_b2:
+                                if st.button("Excluir", key=f"excluir_{t.get('id')}"):
+                                    # 🌟 ALTERADO: Remoção mapeada na Service
+                                    if batalha_service.deletar_time(t.get('id')):
+                                        st.success("Excluído!")
+                                        st.rerun()
 
     # --------------------------------------------------
-    # ALUNO
+    # FLUXO DO ALUNO (ENTRAR EM EQUIPES)
     # --------------------------------------------------
     else:
         try:
             user_id = int(user_id)
         except (TypeError, ValueError):
-            st.error("Sessao invalida.")
+            st.error("Sessão inválida.")
             return
 
-        if aluno_tem_time(user_id):
+        # 🌟 ALTERADO: Validação inteligente usando a regra de negócio da classe
+        if batalha_service.aluno_tem_time(user_id):
             st.markdown("""
             <div style="
                 background:#e0f7fa;
@@ -112,18 +96,19 @@ def tela_batalha_times():
                 border-radius:8px;
                 padding:16px 20px;
             ">
-                <strong style="color:#0d1b2a;">Voce ja esta em um time.</strong><br>
-                <span style="color:#555;">Acesse a aba Integrantes para ver seu time.</span>
+                <strong style="color:#0d1b2a;">Você já está associado a um time.</strong><br>
+                <span style="color:#555;">Acesse a aba "Integrantes" para visualizar seus colegas de equipe.</span>
             </div>
             """, unsafe_allow_html=True)
             return
 
         st.markdown("### Entrar em um time")
 
-        times = listar_times()
+        # 🌟 ALTERADO: Listagem de times para escolha do estudante
+        times = batalha_service.listar_times()
 
         if not times:
-            st.info("Nenhum time disponivel no momento.")
+            st.info("Nenhum time disponível no momento para inscrição.")
             return
 
         mapa = {
@@ -133,14 +118,16 @@ def tela_batalha_times():
         }
 
         if not mapa:
-            st.error("Dados invalidos de times.")
+            st.error("Dados inválidos de times.")
             return
 
         sel = st.selectbox("Selecione um time", list(mapa.keys()))
 
-        if st.button("Entrar no time", use_container_width=True):
-            if entrar_no_time(mapa[sel], user_id):
-                st.success(f"Voce entrou no time '{sel}'!")
+        if st.button("Confirmar Entrada no Time", use_container_width=True):
+            time_id_escolhido = mapa[sel]
+            # 🌟 ALTERADO: Registro de entrada utilizando o fluxo seguro da Service
+            if batalha_service.entrar_no_time(time_id_escolhido, user_id):
+                st.success(f"Você entrou com sucesso no time '{sel}'!")
                 st.rerun()
             else:
-                st.warning("Voce ja pertence a um time.")
+                st.error("Falha ao entrar no time. Verifique se a vaga ainda está disponível.")

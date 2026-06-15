@@ -1,129 +1,35 @@
+# telas/mini_provas/cadastro_mini_provas.py (Visualização)
 import streamlit as st
-
-from services.mini_prova_service import (
-    criar_mini_prova
-)
+# 🌟 ALTERADO: Puxando a instância única global do serviço
+from services import mini_prova_service
 
 
-def tela_cadastro_mini_provas():
+def tela_visualizar_mini_prova():
 
-    st.title("Cadastro de Mini Provas")
+    st.title("Visualizar Mini Prova")
 
-    titulo = st.text_input(
-        "Título"
-    )
+    id_mini_prova = st.session_state.get("id_mini_prova")
 
-    disciplina = st.text_input(
-        "Disciplina"
-    )
+    # 🌟 ALTERADO: Chamada via método da classe de serviço
+    prova = mini_prova_service.buscar_mini_prova(id_mini_prova)
 
-    assunto = st.text_input(
-        "Assunto"
-    )
+    if not prova:
+        st.error("Mini prova não encontrada")
+        return
 
-    quantidade_total = st.number_input(
-        "Quantidade total",
-        min_value=1,
-        step=1
-    )
+    st.subheader(prova.get("titulo", "Sem título"))
 
-    quantidade_faceis = st.number_input(
-        "Questões fáceis",
-        min_value=0,
-        step=1
-    )
+    st.write(prova.get("descricao", "Sem descrição."))
 
-    quantidade_medias = st.number_input(
-        "Questões intermediárias",
-        min_value=0,
-        step=1
-    )
+    # 🌟 ALTERADO: Nomenclaturas adaptadas para as colunas corrigidas no banco PT-BR
+    st.write(f"Quantidade de questões: {prova.get('quantidade_questoes', '-')}")
 
-    quantidade_dificeis = st.number_input(
-        "Questões difíceis",
-        min_value=0,
-        step=1
-    )
+    st.write(f"Duração: {prova.get('duracao_minutos', '-')} minutos")
 
-    tempo_minutos = st.number_input(
-        "Tempo (minutos)",
-        min_value=1,
-        step=1
-    )
-
-    pontos = st.number_input(
-        "Pontuação",
-        min_value=0.1,
-        step=0.1
-    )
-
-    if st.button(
-        "Criar Mini Prova"
-    ):
-
-        soma = (
-            quantidade_faceis +
-            quantidade_medias +
-            quantidade_dificeis
-        )
-
-        if soma != quantidade_total:
-
-            st.error(
-                "A soma das dificuldades deve ser igual ao total"
-            )
-
-            return
-
-        usuario = (
-            st.session_state.usuario_logado
-        )
-
-        dados = {
-
-            "email_professor":
-            usuario["email"],
-
-            "titulo":
-            titulo,
-
-            "disciplina":
-            disciplina,
-
-            "assunto":
-            assunto,
-
-            "quantidade_total":
-            quantidade_total,
-
-            "quantidade_faceis":
-            quantidade_faceis,
-
-            "quantidade_medias":
-            quantidade_medias,
-
-            "quantidade_dificeis":
-            quantidade_dificeis,
-
-            "tempo_minutos":
-            tempo_minutos,
-
-            "pontos":
-            pontos
-        }
-
-        criar_mini_prova(dados)
-
-        st.success(
-            "Mini prova criada"
-        )
+    st.write(f"Status: {prova.get('status', 'Indisponível')}")
 
     st.divider()
 
     if st.button("Voltar"):
-
-        st.session_state.pagina = (
-            "mini_provas"
-        )
-
+        st.session_state.pagina = "mini_provas"
         st.rerun()
