@@ -37,6 +37,36 @@ O **Sistema de Mini-Provas** é uma API desenvolvida para facilitar a criação,
 - ✅ Identificação de tópicos que precisam de reforço
 - ✅ Relatórios e ranking de desempenho
 
+## Estrutura da Aplicação
+
+```bash
+app/
+├── main.py                      # Ponto de entrada (FastAPI)
+├── core/                        # Configurações globais e infraestrutura
+│   ├── database.py              # GoF: Singleton
+│   └── exceptions.py            # Tratamento de erros
+├── modules/                     # Fronteiras do Monólito Modular
+│   ├── usuarios/                # Módulo de Usuários (Alunos/Professores)
+│   │   ├── models.py            # MVC: Model (Pydantic)
+│   │   ├── repository.py        # GoF: Repository / GRASP: Pure Fabrication
+│   │   ├── service.py           # MVC: Controller / GRASP: Information Expert
+│   │   └── router.py            # MVC: View (Endpoints)
+│   ├── questoes/                # Módulo de Questões
+│   │   ├── models.py
+│   │   ├── repository.py
+│   │   ├── service.py
+│   │   └── router.py
+│   ├── mini_provas/             # Módulo de Mini-Provas
+│   │   ├── models.py
+│   │   ├── repository.py
+│   │   ├── strategies.py        # GoF: Strategy
+│   │   ├── service.py
+│   │   └── router.py
+│   └── relatorios/              # Módulo de Relatórios
+│       └── router.py
+└── requirements.txt
+```
+
 ---
 
 ## ✨ Funcionalidades
