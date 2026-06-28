@@ -64,7 +64,6 @@ app/
 │   │   └── router.py
 │   └── relatorios/              # Módulo de Relatórios
 │       └── router.py
-└── requirements.txt
 ```
 
 ---
